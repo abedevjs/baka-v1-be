@@ -1,0 +1,27 @@
+{
+  "name": "caribagasiv1",
+  "version": "1.0.0",
+  "description": "Aplikasi cari bagasi untuk wni luar negeri",
+  "main": "app.js",
+  "scripts": {
+    "start:development": "nodemon index.js",
+    "start:production": "set NODE_ENV=production && nodemon index.js",
+    "debug": "ndb index.js"
+  },
+  "author": "@be",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.6.5",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.8.0",
+    "nodemon": "^2.0.20",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "ndb": "^1.1.5"
+  }
+}
