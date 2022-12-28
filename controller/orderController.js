@@ -58,7 +58,10 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE
     if (req.params.bagasiId == req.user.orderBagasiId) return next(new AppError('Kamu sudah memesan bagasi ini, ingin mengupdate pesanan?', 403));
 
-    //todo 4. Jika semua kondisi diatas terpenuhi, create order
+    //todo 4. Cek if bagasi is overloaded, request denied
+    if (bagId.jumlah < req.body.jumlah) return next(new AppError('Bagasi yang Anda pesan telah memenuhi kapasitas, koreksi jumlah pesanan Anda', 401));
+
+    //todo 5. Jika semua kondisi diatas terpenuhi, create order
     const order = await Order.create({
         jumlah: req.body.jumlah,
         isi: req.body.isi,

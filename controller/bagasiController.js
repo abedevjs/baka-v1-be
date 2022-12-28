@@ -112,7 +112,7 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
     // todo 3. Check if bagasi has been ordered, request denied
     if (id.booked > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel. Hubungi Admin', 401));
 
-    //todo 3. Delete bagasiId from User.bagasi
+    //todo 4. Delete bagasiId from User.bagasi
     const user = await User.findById(req.user.id);
     const userBagasi = await User.updateOne(user, {
         $pull: {
