@@ -27,7 +27,7 @@ const bagasiSchema = new mongoose.Schema({
     jumlah: {
         type: Number,
         required: [true, 'Pastikan jumlah bagasi(Kg) yang dijual'],
-        min: [1, 'Jumlah minimal 1']
+        min: [0, 'Jumlah minimal 0'],
     },
     booked: {
         type: Number,

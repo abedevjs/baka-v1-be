@@ -72,14 +72,19 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 })
 
 exports.updateBagasi = catchAsync(async (req, res, next) => {
-    const id = await Bagasi.findById(req.params.id);
+    const bagasi = await Bagasi.findById(req.params.id);
 
-    if (id.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
+    //todo 1. Check Owner.
+    if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
-    const bagasi = await Bagasi.findByIdAndUpdate(id, {
+    //todo 2. Check Jumlah.
+    if (bagasi.booked > req.body.jumlah) return next(new AppError('Jumlah Bagasi yang telah dipesan melebihi yang Anda jual', 401));
+
+    //todo 3. If all conditions above are fulfilled, update Bagasi
+    const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
         tanggalKeberangkatan: req.body.tanggalKeberangkatan,
         harga: req.body.harga,
-        jumlah: req.body.jumlah,
+        jumlah: bagasi.booked - req.body.jumlah,
         pesawat: req.body.pesawat,
     },
         {
@@ -90,12 +95,12 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
 
     // console.log(bagasi.owner.id);
 
-    if (!bagasi) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
+    if (!updatedBagasi) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
 
     res.status(200).json({
         status: 'done',
         data: {
-            bagasi
+            updatedBagasi
         }
     });
 })
