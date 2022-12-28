@@ -109,6 +109,9 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
     // todo 2. Check if he is the owner
     if (id.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
+    // todo 3. Check if bagasi has been ordered, request denied
+    if (id.booked > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel. Hubungi Admin', 401));
+
     //todo 3. Delete bagasiId from User.bagasi
     const user = await User.findById(req.user.id);
     const userBagasi = await User.updateOne(user, {
@@ -120,7 +123,7 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
     });
 
     //todo 4. Delete bagasi document from Bagasi collection
-    const bagasi = await Bagasi.findByIdAndDelete(id);
+    const bagasi = await Bagasi.findOneAndUpdate(id, { active: false });
     if (!userBagasi || !bagasi) return next(new AppError('Terjadi kesalahan dalam menghapus bagasi Anda', 400));
 
     res.status(200).json({

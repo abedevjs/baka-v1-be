@@ -69,6 +69,7 @@ const bagasiSchema = new mongoose.Schema({
 
 // bagasiSchema.index({ order: 1 }, { unique: true })
 
+//! Document Middleware --start
 bagasiSchema.post('save', async function () {//* create a Reference document to Owner/User
     const ownerId = this.owner._id
 
@@ -78,12 +79,15 @@ bagasiSchema.post('save', async function () {//* create a Reference document to 
         }
     })
 });
+//! Document Middleware --end
 
+//! Query Middleware --start
 bagasiSchema.pre(/^find/, async function (next) {
     this.find({ active: { $ne: false } });
 
     next();
 });
+//! Query Middleware --end
 
 const Bagasi = mongoose.model('Bagasi', bagasiSchema);
 module.exports = Bagasi;

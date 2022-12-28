@@ -68,10 +68,8 @@ orderSchema.post('save', async function () {
     })
 });
 
-orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, jumlah, booked dan balance bagasinya ter update
-    const currentDocument = this._update;
-
-    currentDocument.active = false; //* nge set Order document active nya = false. Jadi documentnya tidak di delete, tetap di keep tapi tidak keluar saat di search.
+orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, jumlah, booked dan balance bagasinya ter update. Fn ini di called di orderController.deleteOrder()
+    const currentDocument = this._conditions;
 
     const bagasiId = currentDocument.bagasi._id;
     await Bagasi.findByIdAndUpdate(bagasiId, {

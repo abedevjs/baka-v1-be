@@ -143,7 +143,7 @@ exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/6
     // const deleteOrder = await Order.findOneAndUpdate(req.params.id);
     // const deleteOrder = await Order.deleteOne({ _id: req.params.id });
     // const deleteOrder = await Order.findByIdAndUpdate(req.params.id, { active: false });
-    const deleteOrder = await Order.updateOne(order);
+    const deleteOrder = await Order.updateOne(order, { active: false });
 
     if (!bagasiOrder || !userOrder || !deleteOrder) return next(new AppError('Kesalahan dalam menghapus order', 400));
 
