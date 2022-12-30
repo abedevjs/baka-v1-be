@@ -24,6 +24,10 @@ const bagasiSchema = new mongoose.Schema({
         required: [true, 'Pastikan harga bagasi per Kg'],
         min: [1, 'Harga tidak valid']
     },
+    initial: {
+        type: Number,
+        default: 0
+    },
     jumlah: {
         type: Number,
         required: [true, 'Pastikan jumlah bagasi(Kg) yang dijual'],
@@ -70,14 +74,18 @@ const bagasiSchema = new mongoose.Schema({
 // bagasiSchema.index({ order: 1 }, { unique: true })
 
 //! Document Middleware --start
-bagasiSchema.post('save', async function () {//* create a Reference document to Owner/User
-    const ownerId = this.owner._id
+bagasiSchema.pre('save', async function (next) {//* create a Reference document to Owner/User
+    const ownerId = this.owner._id;
+
+    this.initial = this.jumlah;
 
     await User.findByIdAndUpdate(ownerId, {
         $push: {
             bagasi: this._id
         }
     })
+
+    next()
 });
 //! Document Middleware --end
 

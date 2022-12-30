@@ -1,0 +1,16 @@
+1. update authCtrl.keluar(). tokennya clear
+
+
+
+
+2. Kondisi boleh update order apa saja?
+
+
+
+
+solusi updateOrder;
+di bagasiModel buat fn getTotalBooked, getTogal. done
+user hanya bisa order bagasi yang sama 3 kali.
+referencing antara order dan bagasi di perbaiki, isi bagasi dalam order hanya id bagasi.
+penamaan properti model di Bagasi dan Order agar lebih deskriptif.
+

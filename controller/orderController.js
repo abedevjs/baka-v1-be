@@ -47,15 +47,17 @@ exports.getOneOrder = catchAsync(async (req, res, next) => {
 });
 
 exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bagasi/:bagasiId/order
-    //todo 1. Cek owner bagasi tidak boleh order bagasi sendiri
+
     const bagId = await Bagasi.findById(req.params.bagasiId);
     if (!bagId) return next(new AppError('Bagasi yang ingin Anda order tidak tersedia', 404));
+
+    //todo 1. Cek owner bagasi tidak boleh order bagasi sendiri
     if (bagId.owner._id.toString() === req.user.id) return next(new AppError('Anda tidak boleh membeli bagasi sendiri', 403));
 
     //todo 2. Cek user tdk punya lebih dari 5 aktif order
     if (req.user.order.length >= 5) return next(new AppError('Kamu hanya boleh memiliki 5 order aktif', 403));
 
-    //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE
+    //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. THIS WILL BE LIMITED TO 3 ORDERS PER 1 BAGASI
     if (req.params.bagasiId == req.user.orderBagasiId) return next(new AppError('Kamu sudah memesan bagasi ini, ingin mengupdate pesanan?', 403));
 
     //todo 4. Cek if bagasi is overloaded, request denied
@@ -81,12 +83,28 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     });
 });
 
-exports.updateOrder = catchAsync(async (req, res, next) => {
-    const id = await Order.findById(req.params.id);
+exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/634a9ae426fc2de08774ae4a
+    const order = await Order.findById(req.params.id);
+    const bagasi = order.bagasi;
+    const currentBagasi = await Bagasi.findById(bagasi._id)
 
-    if (id.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemesan/pembeli bagasi ini. Akses di tolak', 401));
+    const bagOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
 
-    const order = await Order.findByIdAndUpdate(id, {
+    let jumlah = [];
+    let biaya = [];
+
+
+    //todo 1. Check if Order is exist
+    if (!order) return next(new AppError('Order yang Anda minta tidak tersedia', 404));
+
+    //todo 2. Check if User is owner
+    if (order.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemesan/pembeli bagasi ini. Akses di tolak', 401));
+
+    //todo 3. Cek if bagasi is overloaded, request denied
+    if (currentBagasi.jumlah < (order.jumlah + req.body.jumlah) && req.body.jumlah > order.jumlah && (currentBagasi.jumlah + order.jumlah + req.body.jumlah) > currentBagasi.initial) return next(new AppError('Bagasi yang Anda pesan telah memenuhi kapasitas, koreksi jumlah pesanan Anda', 401))
+
+    //todo 4. Update Order
+    const updatedOrder = await Order.findByIdAndUpdate(order, {
         jumlah: req.body.jumlah,
         isi: req.body.isi,
         biaya: req.body.biaya,
@@ -95,18 +113,42 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
         {
             new: true,
             runValidators: true
-        });
+        }
+    );
 
-    if (!order) return next(new AppError('Kesalahan dalam memperbaharui order', 400));
+    //todo 5. Calculate total Jumlah dan Balance di Bagasi
+    await Promise.all(bagOrderIds.map(async (el) => {
+        const val = (await Order.findById(el)).jumlah;
+        jumlah.push(val);
+
+    }));
+    const totalJumlah = jumlah.reduce((acc, el) => acc + el, 0)
+
+    await Promise.all(bagOrderIds.map(async (el) => {
+        const val = (await Order.findById(el)).biaya;
+        biaya.push(val);
+
+    }));
+    const totalBiaya = biaya.reduce((acc, el) => acc + el, 0);
+
+    //todo 6. Update Bagasi
+    const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi._id, {
+
+        jumlah: bagasi.initial - totalJumlah,
+        booked: totalJumlah,
+        balance: totalBiaya
+    });
+
+    if (!updatedOrder || !updatedBagasi) return next(new AppError('Kesalahan dalam memperbaharui order', 400));
 
     res.status(200).json({
         status: 'done',
         requestedAt: req.time,
         data: {
-            order
+            updatedOrder
         }
     });
-})
+});
 
 exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/634d1e13fc881dd5c6208968
 
