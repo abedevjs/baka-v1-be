@@ -51,7 +51,7 @@ orderSchema.post('save', async function () {
 
     await Bagasi.findByIdAndUpdate(bagasiId, {
         $inc: {
-            jumlah: -this.jumlah,
+            available: -this.jumlah,
             booked: +this.jumlah,
             balance: +this.biaya
         },
@@ -68,13 +68,13 @@ orderSchema.post('save', async function () {
     })
 });
 
-orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, jumlah, booked dan balance bagasinya ter update. Fn ini di called di orderController.deleteOrder()
+orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, available, booked dan balance bagasinya ter update. Fn ini di called di orderController.deleteOrder()
     const currentDocument = this._conditions;
 
     const bagasiId = currentDocument.bagasi._id;
     await Bagasi.findByIdAndUpdate(bagasiId, {
         $inc: {
-            jumlah: +currentDocument.jumlah,
+            available: +currentDocument.jumlah,
             booked: -currentDocument.jumlah,
             balance: -currentDocument.biaya
         },

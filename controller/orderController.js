@@ -57,11 +57,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     //todo 2. Cek user tdk punya lebih dari 5 aktif order
     if (req.user.order.length >= 5) return next(new AppError('Kamu hanya boleh memiliki 5 order aktif', 403));
 
-    //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. THIS WILL BE LIMITED TO 3 ORDERS PER 1 BAGASI
-    if (req.params.bagasiId == req.user.orderBagasiId) return next(new AppError('Kamu sudah memesan bagasi ini, ingin mengupdate pesanan?', 403));
+    //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
+    if (req.user.orderBagasiId.includes(req.params.bagasiId)) return next(new AppError('Kamu sudah memesan bagasi ini, ingin mengupdate pesanan?', 403));
 
     //todo 4. Cek if bagasi is overloaded, request denied
-    if (bagId.jumlah < req.body.jumlah) return next(new AppError('Bagasi yang Anda pesan telah memenuhi kapasitas, koreksi jumlah pesanan Anda', 401));
+    if (bagId.available < req.body.jumlah) return next(new AppError('Bagasi yang Anda pesan telah memenuhi kapasitas, koreksi jumlah pesanan Anda', 401));
 
     //todo 5. Jika semua kondisi diatas terpenuhi, create order
     const order = await Order.create({
@@ -90,10 +90,6 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
 
     const bagOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
 
-    let jumlah = [];
-    let biaya = [];
-
-
     //todo 1. Check if Order is exist
     if (!order) return next(new AppError('Order yang Anda minta tidak tersedia', 404));
 
@@ -101,7 +97,10 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     if (order.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemesan/pembeli bagasi ini. Akses di tolak', 401));
 
     //todo 3. Cek if bagasi is overloaded, request denied
-    if (currentBagasi.jumlah < (order.jumlah + req.body.jumlah) && req.body.jumlah > order.jumlah && (currentBagasi.jumlah + order.jumlah + req.body.jumlah) > currentBagasi.initial) return next(new AppError('Bagasi yang Anda pesan telah memenuhi kapasitas, koreksi jumlah pesanan Anda', 401))
+    // req.body.jumlah = 46, order.jumlah = 15. currentBagasi.initial = 60, currentBagasi.avail = 15, currentBagasi.booked = 45
+    // console.log(`😂, req.body.jumlah:${req.body.jumlah}, order.jumlah:${order.jumlah}, currentBagasi.initial:${currentBagasi.initial}, currentBagasi.available:${currentBagasi.available}, currentBagasi.booked:${currentBagasi.booked},`);
+    if ((order.jumlah + req.body.jumlah) > currentBagasi.available && req.body.jumlah > (order.jumlah + currentBagasi.available)) return next(new AppError('Bagasi yang Anda pesan telah melebih kapasitas, koreksi jumlah pesanan Anda', 401))
+
 
     //todo 4. Update Order
     const updatedOrder = await Order.findByIdAndUpdate(order, {
@@ -117,6 +116,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     );
 
     //todo 5. Calculate total Jumlah dan Balance di Bagasi
+    let jumlah = [];
     await Promise.all(bagOrderIds.map(async (el) => {
         const val = (await Order.findById(el)).jumlah;
         jumlah.push(val);
@@ -124,6 +124,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     }));
     const totalJumlah = jumlah.reduce((acc, el) => acc + el, 0)
 
+    let biaya = [];
     await Promise.all(bagOrderIds.map(async (el) => {
         const val = (await Order.findById(el)).biaya;
         biaya.push(val);
@@ -134,7 +135,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     //todo 6. Update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi._id, {
 
-        jumlah: bagasi.initial - totalJumlah,
+        available: bagasi.initial - totalJumlah,
         booked: totalJumlah,
         balance: totalBiaya
     });

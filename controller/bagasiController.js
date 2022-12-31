@@ -55,9 +55,8 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         tujuan: req.body.tujuan,
         waktuKeberangkatan: req.body.waktuKeberangkatan,
         harga: req.body.harga,
-        jumlah: req.body.jumlah,
+        available: req.body.available,
         pesawat: req.body.pesawat,
-        jumlah: req.body.jumlah,
         owner: await User.findById(req.user.id)
     });
 
@@ -77,14 +76,14 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     //todo 1. Check Owner.
     if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
-    //todo 2. Check Jumlah.
-    if (bagasi.booked > req.body.jumlah) return next(new AppError('Jumlah Bagasi yang telah dipesan melebihi yang Anda jual', 401));
+    //todo 2. Check if ordered Bagasi is bigger than the new one, request denied.
+    if (bagasi.booked > req.body.available) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual', 401));
 
     //todo 3. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
         tanggalKeberangkatan: req.body.tanggalKeberangkatan,
         harga: req.body.harga,
-        jumlah: bagasi.booked - req.body.jumlah,
+        available: req.body.available,
         pesawat: req.body.pesawat,
     },
         {

@@ -10,7 +10,7 @@
 
 solusi updateOrder;
 di bagasiModel buat fn getTotalBooked, getTogal. done
-user hanya bisa order bagasi yang sama 3 kali.
-referencing antara order dan bagasi di perbaiki, isi bagasi dalam order hanya id bagasi.
+user hanya bisa order bagasi yang sama 3 kali. pending
+referencing antara order dan bagasi di perbaiki, isi bagasi dalam order hanya id bagasi. tdk jadi
 penamaan properti model di Bagasi dan Order agar lebih deskriptif.
 

@@ -28,10 +28,11 @@ const bagasiSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    jumlah: {
+    available: {
         type: Number,
         required: [true, 'Pastikan jumlah bagasi(Kg) yang dijual'],
         min: [0, 'Jumlah minimal 0'],
+        max: [60, 'Jumlah maksimal 60'],
     },
     booked: {
         type: Number,
@@ -77,7 +78,7 @@ const bagasiSchema = new mongoose.Schema({
 bagasiSchema.pre('save', async function (next) {//* create a Reference document to Owner/User
     const ownerId = this.owner._id;
 
-    this.initial = this.jumlah;
+    this.initial = this.available;
 
     await User.findByIdAndUpdate(ownerId, {
         $push: {
