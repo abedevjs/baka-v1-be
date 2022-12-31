@@ -77,7 +77,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
     //todo 2. Check if ordered Bagasi is bigger than the new one, request denied.
-    if (bagasi.booked > req.body.available) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual', 401));
+    console.log('😃', bagasi.booked > req.body.available, (req.body.available == 60 && bagasi.initial == 60));
+    if (bagasi.booked > req.body.available || (req.body.available == 60 && bagasi.initial == 60)) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual. Jika mendesak, hubungi Admin.', 401));
 
     //todo 3. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
@@ -90,9 +91,6 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
             new: true,
             runValidators: true
         });
-
-
-    // console.log(bagasi.owner.id);
 
     if (!updatedBagasi) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
 
