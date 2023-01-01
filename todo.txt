@@ -17,5 +17,5 @@ penamaan properti model di Bagasi dan Order agar lebih deskriptif. sudah
 auth controller path khusus admin
 get user utk manipulate data user
 applying Oauth, agar user bisa login cukup lwt gmail dan fb
-updateBagasi quantiy
+updateBagasi quantiy. done
 

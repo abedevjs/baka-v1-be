@@ -77,8 +77,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
     //todo 2. Check if ordered Bagasi is bigger than the new one, request denied.
-    console.log('😃', bagasi.booked > req.body.available, (req.body.available == 60 && bagasi.initial == 60));
-    if (bagasi.booked > req.body.available || (req.body.available == 60 && bagasi.initial == 60)) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual. Jika mendesak, hubungi Admin.', 401));
+    // console.log('😃', bagasi.booked > req.body.available, (req.body.available == 60 && bagasi.initial == 60));
+    if (bagasi.booked > req.body.available || (req.body.available == 60 && bagasi.initial == 60) || ((bagasi.booked + req.body.available) - bagasi.booked) > 60) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual. Jika mendesak, hubungi Admin.', 401));
 
     //todo 3. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
@@ -86,13 +86,25 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
         harga: req.body.harga,
         available: req.body.available,
         pesawat: req.body.pesawat,
-    },
-        {
-            new: true,
-            runValidators: true
-        });
 
-    if (!updatedBagasi) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
+    }, {
+        new: true,
+        runValidators: true
+    });
+
+    //todo 4. Update the quantities (Initial, Available) inside the updatedBagasi
+    // console.log('🙃', `Available: ${Math.abs((bagasi.booked - req.body.available))}, Initial: ${bagasi.booked + Math.abs((bagasi.booked - req.body.available))}`);
+    const updateIncrement = await Bagasi.findByIdAndUpdate(updatedBagasi, {
+
+        available: Math.abs((bagasi.booked - req.body.available)),
+        initial: bagasi.booked + Math.abs((bagasi.booked - req.body.available)),
+
+    }, {
+        new: true,
+        runValidators: true
+    });
+
+    if (!updatedBagasi || !updateIncrement) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
 
     res.status(200).json({
         status: 'done',
