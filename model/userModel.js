@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    active: {
+        type: Boolean,
+        select: true,
+        default: true
+    },
 });
 
 userSchema.pre('save', async function (next) {//* The 'pre' on 'save' do get access on next(). The 'post' on 'save' does NOT get access on next().

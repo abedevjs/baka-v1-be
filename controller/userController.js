@@ -50,7 +50,8 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 });
 
 exports.hapusUser = catchAsync(async (req, res, next) => {
-    await User.findByIdAndDelete(req.user.id);
+    // await User.findByIdAndDelete(req.user.id);
+    await User.findByIdAndUpdate(req.user.id, { active: false });
 
     res.status(200).json({
         status: 'done',

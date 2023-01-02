@@ -2,6 +2,7 @@ const crypto = require('crypto');//NodeJS built-in password hasher
 const { promisify } = require('util');//Express built-in asyncronous function
 const jwt = require('jsonwebtoken');
 const User = require('./../model/userModel');
+const UserGoogle = require('./../model/userGoogleModel');
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
 const sendEmail = require('./../utility/email');
@@ -86,7 +87,13 @@ exports.protect = catchAsync(async (req, res, next) => {
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) return next(new AppError('Mohon login kembali', 401));
 
-    //todo 4. Check if user change password after token was issued
+    //todo 4. Check if user change password after token was issued. CODE INI INACTIVE KARENA PAKAI USERGOOGLEMODEL
+    if (!currentUser.password) { //* Jika user dari userGoogle
+        req.user = currentUser;
+
+        next();
+    };
+
     if (currentUser.changedPasswordAfter(decoded.iat)) return next(new AppError('Password has recently changed, please log in again', 401));
 
     //todo 5. If all 4 verify steps above is passed, grant access to protected route.
@@ -180,3 +187,57 @@ exports.restrictTo = (...roles) => {
         next();
     }
 };
+
+//* ---------------------------------------------------------------------------------------------
+
+const service = require('../utility/service');
+
+//* dari tombol 'Login with Google' UI masuk kesini
+exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn handle this callback url www.nama.com/oauth/google
+
+
+    //todo 1. Client klik login yg menuju ke callback ini:
+    //* www.nama.com/oauth/google
+
+    //todo 2. Get code from the query string that sended back by Google
+    const code = req.query.code;
+
+    //todo 3. Get the id_token and access token with the code using Axios
+    const data = await service.getGoogleOauthTokens(code)
+    const { id_token, access_token, expires_in, refresh_token, scope, token_type } = data;
+    // console.log('🥰' `😁id_token: ${id_token}, 😆access_token: ${access_token}, 😆expires_in: ${expires_in}, 😆refresh_token: ${refresh_token},`);
+
+    //todo 4. Get Google User with tokens
+    //* Cara 1, melalui jsonwebtoken yg sdh di signed oleh Google
+    const googleUser = jwt.decode(id_token);
+    console.log(googleUser);
+
+    //* Cara 2, melalui Google API
+    // const googleUser = await service.getGoogleUser(id_token, access_token);
+
+    //todo 5. Upsert(update) the User in the database
+    if (!googleUser.email_verified) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401))
+
+    const newUser = await UserGoogle.create({
+        name: googleUser.name,
+        email: googleUser.email,
+        image: googleUser.picture,
+    })
+
+    //todo 6. Create a session
+
+
+    //todo 7. Create access and refresh token
+
+
+    //todo 8. Set cookies
+
+
+    //todo 9. Redirect back to client
+
+
+
+    if (!newUser) return next(new AppError('Kesalahan dalam mendaftar', 400));
+
+    createSendToken(newUser, 201, res);
+});
