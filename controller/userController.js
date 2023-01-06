@@ -11,7 +11,19 @@ const filterBody = (obj, ...allowedFields) => {
     return newObj;
 };
 
-exports.profilSaya = catchAsync(async (req, res, next) => {
+exports.all = catchAsync(async (req, res) => {
+    const data = await User.find();
+
+    res.status(200).json({
+        status: 'done',
+        results: data.length,
+        data: {
+            data
+        }
+    })
+})
+
+exports.profil = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user.id).populate({
         path: 'bagasi order'
     })
@@ -24,7 +36,7 @@ exports.profilSaya = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.updateUser = catchAsync(async (req, res, next) => {
+exports.update = catchAsync(async (req, res, next) => {
     //todo 1. Create error if user POSTs password data
     if (req.body.password || req.body.passwordConfirm) return next(new AppError('Updating for password on route /updatePassword', 401));
 
@@ -33,7 +45,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 
     //todo 3. Update user document
     const updatedUser = await User.findByIdAndUpdate(req.user.id, {
-        name: req.body.name,
+        nama: req.body.nama,
         email: req.body.email,
         telpon: req.body.telpon
     }, {
@@ -49,8 +61,16 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     })
 });
 
-exports.hapusUser = catchAsync(async (req, res, next) => {
-    // await User.findByIdAndDelete(req.user.id);
+exports.hapus = catchAsync(async (req, res, next) => {
+
+    //todo 1. Check user
+    const user = await User.findById(req.user.id);
+    if (!user) return next(new AppError('User ini tidak ditemukan', 404));
+
+    //todo 2. Check if theres any active Bagasi/Order
+    if (user.bagasi.length > 0 || user.order.length > 0) return next(new AppError('User yang masih memiliki bagasi/order aktif belum bisa di hapus kakak 😢', 401));
+
+    //todo 3. If passed, delete disactivate user
     await User.findByIdAndUpdate(req.user.id, { active: false });
 
     res.status(200).json({

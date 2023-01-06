@@ -19,3 +19,8 @@ get user utk manipulate data user
 applying Oauth, agar user bisa login cukup lwt gmail dan fb
 updateBagasi quantiy. done
 
+setelah Oauth: strategy sementara:
+setelah new UserGoogle.create({}) buat copy ke User model dengan User.create({}, {runValidation: false})
+jika ada copy di User, seluruh operasional di bagasiController, orderController, userController hanya pakai User model
+
+bagasimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??

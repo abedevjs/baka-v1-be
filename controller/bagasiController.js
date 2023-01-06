@@ -73,14 +73,17 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 exports.updateBagasi = catchAsync(async (req, res, next) => {
     const bagasi = await Bagasi.findById(req.params.id);
 
-    //todo 1. Check Owner.
+    //todo 1. Check Bagasi
+    if (!bagasi) return next(new AppError('Bagasi yang kakak minta tidak tersedia 😢', 404));
+
+    //todo 2. Check Owner.
     if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
 
-    //todo 2. Check if ordered Bagasi is bigger than the new one, request denied.
+    //todo 3. Check if ordered Bagasi is bigger than the new one, request denied.
     // console.log('😃', bagasi.booked > req.body.available, (req.body.available == 60 && bagasi.initial == 60));
     if (bagasi.booked > req.body.available || (req.body.available == 60 && bagasi.initial == 60) || ((bagasi.booked + req.body.available) - bagasi.booked) > 60) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual. Jika mendesak, hubungi Admin.', 401));
 
-    //todo 3. If all conditions above are fulfilled, update Bagasi
+    //todo 4. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
         tanggalKeberangkatan: req.body.tanggalKeberangkatan,
         harga: req.body.harga,
@@ -92,7 +95,7 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
         runValidators: true
     });
 
-    //todo 4. Update the quantities (Initial, Available) inside the updatedBagasi
+    //todo 5. Update the quantities (Initial, Available) inside the updatedBagasi
     // console.log('🙃', `Available: ${Math.abs((bagasi.booked - req.body.available))}, Initial: ${bagasi.booked + Math.abs((bagasi.booked - req.body.available))}`);
     const updateIncrement = await Bagasi.findByIdAndUpdate(updatedBagasi, {
 

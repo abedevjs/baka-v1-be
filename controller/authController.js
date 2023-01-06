@@ -23,7 +23,7 @@ const createSendToken = (user, statusCode, res) => {
     };
     if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
-    User.password = undefined;//removing the password from output to client
+    user.password = undefined;//removing the password from output to client
 
     res.cookie('jwt', token, cookieOptions);
 
@@ -87,13 +87,12 @@ exports.protect = catchAsync(async (req, res, next) => {
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) return next(new AppError('Mohon login kembali', 401));
 
-    //todo 4. Check if user change password after token was issued. CODE INI INACTIVE KARENA PAKAI USERGOOGLEMODEL
-    if (!currentUser.password) { //* Jika user dari userGoogle
-        req.user = currentUser;
+    //todo 4. Check if user change password after token was issued.
+    //* Jika user dari userGoogle
+    // if (!currentUser.password) req.user = currentUser;
+    // console.log('😄', req.user);
 
-        next();
-    };
-
+    //* Jika user dari email
     if (currentUser.changedPasswordAfter(decoded.iat)) return next(new AppError('Password has recently changed, please log in again', 401));
 
     //todo 5. If all 4 verify steps above is passed, grant access to protected route.
@@ -210,7 +209,6 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
     //todo 4. Get Google User with tokens
     //* Cara 1, melalui jsonwebtoken yg sdh di signed oleh Google
     const googleUser = jwt.decode(id_token);
-    console.log(googleUser);
 
     //* Cara 2, melalui Google API
     // const googleUser = await service.getGoogleUser(id_token, access_token);
@@ -218,26 +216,42 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
     //todo 5. Upsert(update) the User in the database
     if (!googleUser.email_verified) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401))
 
-    const newUser = await UserGoogle.create({
-        name: googleUser.name,
+    const newGoogleUser = await UserGoogle.create({
+        nama: googleUser.name,
         email: googleUser.email,
         image: googleUser.picture,
     })
 
-    //todo 6. Create a session
+    //todo 6. Copy newUserGoogle document ke User collection. Karena operasi manipulasi data (bagasi, order) dari User collection.
+    const copyUserGoogleToUser = await UserGoogle.aggregate([
 
+        {
+            $match: {
+                bagasi: newGoogleUser.bagasi,
+                _id: newGoogleUser._id,
+                nama: newGoogleUser.nama,
+                email: newGoogleUser.email,
+                order: newGoogleUser.order,
+                orderBagasiId: newGoogleUser.orderBagasiId
+            }
+        },
+        {
+            $project: {
+                "_id": true,
+                "nama": true,
+                "email": true,
+                "bagasi": true,
+                "order": true,
+                "orderBagasiId": true
+            }
+        },
+        { $merge: { "into": "users" } }
 
-    //todo 7. Create access and refresh token
+    ]);
 
+    const newUser = await User.findById(newGoogleUser._id);
 
-    //todo 8. Set cookies
-
-
-    //todo 9. Redirect back to client
-
-
-
-    if (!newUser) return next(new AppError('Kesalahan dalam mendaftar', 400));
+    if (!newGoogleUser || !copyUserGoogleToUser || !newUser) return next(new AppError('Kesalahan dalam mendaftar', 400));
 
     createSendToken(newUser, 201, res);
 });

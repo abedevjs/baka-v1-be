@@ -84,25 +84,25 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
 });
 
 exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/634a9ae426fc2de08774ae4a
-    const order = await Order.findById(req.params.id);
-    const bagasi = order.bagasi;
-    const currentBagasi = await Bagasi.findById(bagasi._id)
-
-    const bagOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
-
     //todo 1. Check if Order is exist
+    const order = await Order.findById(req.params.id);
     if (!order) return next(new AppError('Order yang Anda minta tidak tersedia', 404));
 
-    //todo 2. Check if User is owner
+    //todo 2. Check if Bagasi is exist
+    const bagasi = order.bagasi;
+    const currentBagasi = await Bagasi.findById(bagasi._id)
+    if (!currentBagasi) return next(new AppError('Bagasi yang kakak minta tidak tersedia 😢', 404))
+
+    //todo 3. Check if User is owner
     if (order.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemesan/pembeli bagasi ini. Akses di tolak', 401));
 
-    //todo 3. Cek if bagasi is overloaded, request denied
+    //todo 4. Cek if bagasi is overloaded, request denied
     // req.body.jumlah = 46, order.jumlah = 15. currentBagasi.initial = 60, currentBagasi.avail = 15, currentBagasi.booked = 45
     // console.log(`😂, req.body.jumlah:${req.body.jumlah}, order.jumlah:${order.jumlah}, currentBagasi.initial:${currentBagasi.initial}, currentBagasi.available:${currentBagasi.available}, currentBagasi.booked:${currentBagasi.booked},`);
     if ((order.jumlah + req.body.jumlah) > currentBagasi.available && req.body.jumlah > (order.jumlah + currentBagasi.available)) return next(new AppError('Bagasi yang Anda pesan telah melebih kapasitas, koreksi jumlah pesanan Anda', 401))
 
 
-    //todo 4. Update Order
+    //todo 5. Update Order
     const updatedOrder = await Order.findByIdAndUpdate(order, {
         jumlah: req.body.jumlah,
         isi: req.body.isi,
@@ -115,7 +115,9 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
         }
     );
 
-    //todo 5. Calculate total Jumlah dan Balance di Bagasi
+    //todo 6. Calculate total Jumlah dan Balance di Bagasi
+    const bagOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
+
     let jumlah = [];
     await Promise.all(bagOrderIds.map(async (el) => {
         const val = (await Order.findById(el)).jumlah;
@@ -132,7 +134,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     }));
     const totalBiaya = biaya.reduce((acc, el) => acc + el, 0);
 
-    //todo 6. Update Bagasi
+    //todo 7. Update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi._id, {
 
         available: bagasi.initial - totalJumlah,

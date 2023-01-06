@@ -24,14 +24,17 @@ userRouter.route('/gantiPassword').patch(authController.protect, authController.
 //* www.nama.com/keluar
 userRouter.route('/keluar').get(authController.protect, authController.keluar);
 
-//* www.nama.com/updateUser
-userRouter.route('/updateUser').patch(authController.protect, userController.updateUser);
+//* www.nama.com/user/all
+userRouter.route('/all').get(authController.protect, userController.all)
 
-//* www.nama.com/profilSaya
-userRouter.route('/profilSaya').get(authController.protect, userController.profilSaya);
+//* www.nama.com/user/update
+userRouter.route('/update').patch(authController.protect, userController.update);
 
-//* www.nama.com/hapusUser
-userRouter.route('/hapusUser').delete(authController.protect, userController.hapusUser)
+//* www.nama.com/user/profil
+userRouter.route('/profil').get(authController.protect, userController.profil);
+
+//* www.nama.com/user/hapus
+userRouter.route('/hapus').delete(authController.protect, userController.hapus)
 
 
 
