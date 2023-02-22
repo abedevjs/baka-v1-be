@@ -1,26 +1,21 @@
 1. update authCtrl.keluar(). tokennya clear
+    -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??
 
+2. Kondisi boleh update order apa saja ialah:
+    a. jika order belum dibayar/lunas. Jika sudah lunas, silahkan buat order baru.
+    b. solusi updateOrder:
+    user hanya bisa order bagasi yang sama 3 kali. PENDING
 
+3. Auth Controller path khusus Admin
 
+4. Get User utk manipulate data User
 
-2. Kondisi boleh update order apa saja?
+5. Applying Oauth fb
 
+6. 
 
-
-
-solusi updateOrder;
-di bagasiModel buat fn getTotalBooked, getTogal. done
-user hanya bisa order bagasi yang sama 3 kali. pending
-referencing antara order dan bagasi di perbaiki, isi bagasi dalam order hanya id bagasi. tdk jadi
-penamaan properti model di Bagasi dan Order agar lebih deskriptif. sudah
-
-auth controller path khusus admin
-get user utk manipulate data user
-applying Oauth, agar user bisa login cukup lwt gmail dan fb
-updateBagasi quantiy. done
 
 setelah Oauth: strategy sementara:
-setelah new UserGoogle.create({}) buat copy ke User model dengan User.create({}, {runValidation: false})
+setelah new UserGoogle.create({}) buat copy ke User model dengan UserGoogle.aggregate([{}])
 jika ada copy di User, seluruh operasional di bagasiController, orderController, userController hanya pakai User model
 
-bagasimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??

@@ -15,8 +15,8 @@ console.log(`App running on: ${app.get('env')}`);
 //! Database setup --start
 const mongoose = require('mongoose');
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
-mongoose.connect(process.env.DATABASE_LOCAL, {
-    // mongoose.connect(DB, {
+// mongoose.connect(process.env.DATABASE_LOCAL, { //* Line ini enable klo aktif kan local database
+    mongoose.connect(DB, { //* Line ini enable klo aktifkan remote database
     // useNewUrlParser: true, //tdk usah krn sdh pake mongoose v6
     // useCreateIndex: true, //tdk usah krn sdh pake mongoose v6
     // useFindAndModify: false //tdk usah krn sdh pake mongoose v6

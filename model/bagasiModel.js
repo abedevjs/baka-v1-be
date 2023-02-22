@@ -19,26 +19,26 @@ const bagasiSchema = new mongoose.Schema({
         type: Date,
         required: [true, 'Isi waktu keberangkatan'],
     },
-    harga: {
+    hargaRp: {
         type: Number,
         required: [true, 'Pastikan harga bagasi per Kg'],
         min: [1, 'Harga tidak valid']
     },
-    initial: {
+    initialKg: {
         type: Number,
         default: 0
     },
-    available: {
+    availableKg: {
         type: Number,
         required: [true, 'Pastikan jumlah bagasi(Kg) yang dijual'],
         min: [0, 'Jumlah minimal 0'],
         max: [60, 'Jumlah maksimal 60'],
     },
-    booked: {
+    bookedKg: {
         type: Number,
         default: 0,
     },
-    balance: {
+    balanceRp: {
         type: Number,
         default: 0,
     },
@@ -78,7 +78,7 @@ const bagasiSchema = new mongoose.Schema({
 bagasiSchema.pre('save', async function (next) {//* create a Reference document to Owner/User
     const ownerId = this.owner._id;
 
-    this.initial = this.available;
+    this.initialKg = this.availableKg;
 
     await User.findByIdAndUpdate(ownerId, {
         $push: {

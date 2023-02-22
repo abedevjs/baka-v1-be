@@ -33,10 +33,10 @@ exports.getAllBagasi = catchAsync(async (req, res, next) => {
 exports.getOneBagasi = catchAsync(async (req, res, next) => {
     const bagasi = await Bagasi.findById(req.params.id).populate({
         path: 'order',
-        select: '-tanggalDibuat -isi -biaya -owner -bagasi -__v'
+        select: '-tanggalDibuat -isi -biayaRp -owner -bagasi -__v'
     });
 
-    if (!bagasi) return next(new AppError('Bagasi yang Anda minta tidak tersedia', 404))
+    if (!bagasi) return next(new AppError('Bagasi yang Kakak minta tidak tersedia 😢', 404))
 
     res.status(200).json({
         status: 'done',
@@ -48,19 +48,19 @@ exports.getOneBagasi = catchAsync(async (req, res, next) => {
 
 exports.createBagasi = catchAsync(async (req, res, next) => {
     //todo Preventing create more than 3 bagasi
-    if (req.user.bagasi.length >= 3) return next(new AppError('Kamu hanya boleh memiliki 3 bagasi aktif yang terjual', 403));
+    if (req.user.bagasi.length >= 3) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
 
     const bagasi = await Bagasi.create({
         dari: req.body.dari,
         tujuan: req.body.tujuan,
         waktuKeberangkatan: req.body.waktuKeberangkatan,
-        harga: req.body.harga,
-        available: req.body.available,
+        hargaRp: req.body.hargaRp,
+        availableKg: req.body.availableKg,
         pesawat: req.body.pesawat,
         owner: await User.findById(req.user.id)
     });
 
-    if (!bagasi) return next(new AppError('Terjadi kesalahan dalam mendaftarkan bagasi Anda', 400))
+    if (!bagasi) return next(new AppError('Terjadi kesalahan dalam mendaftarkan bagasi Kakak 😢', 400))
 
     res.status(201).json({
         status: 'done',
@@ -77,17 +77,17 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     if (!bagasi) return next(new AppError('Bagasi yang kakak minta tidak tersedia 😢', 404));
 
     //todo 2. Check Owner.
-    if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
+    if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemilik/penjual bagasi ini 😢. Akses di tolak ya Kak', 401));
 
     //todo 3. Check if ordered Bagasi is bigger than the new one, request denied.
-    // console.log('😃', bagasi.booked > req.body.available, (req.body.available == 60 && bagasi.initial == 60));
-    if (bagasi.booked > req.body.available || (req.body.available == 60 && bagasi.initial == 60) || ((bagasi.booked + req.body.available) - bagasi.booked) > 60) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Anda jual. Jika mendesak, hubungi Admin.', 401));
+    // console.log('😃', bagasi.bookedKg > req.body.availableKg, (req.body.availableKg == 60 && bagasi.initialKg == 60));
+    if (bagasi.bookedKg > req.body.availableKg || (req.body.availableKg == 60 && bagasi.initialKg == 60) || ((bagasi.bookedKg + req.body.availableKg) - bagasi.bookedKg) > 60) return next(new AppError('Jumlah Bagasi yang telah dipesan lebih besar dari yang Kakak jual 😢. Jika mendesak, hubungi Admin.', 401));
 
     //todo 4. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
         tanggalKeberangkatan: req.body.tanggalKeberangkatan,
-        harga: req.body.harga,
-        available: req.body.available,
+        hargaRp: req.body.hargaRp,
+        availableKg: req.body.availableKg,
         pesawat: req.body.pesawat,
 
     }, {
@@ -95,19 +95,19 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
         runValidators: true
     });
 
-    //todo 5. Update the quantities (Initial, Available) inside the updatedBagasi
-    // console.log('🙃', `Available: ${Math.abs((bagasi.booked - req.body.available))}, Initial: ${bagasi.booked + Math.abs((bagasi.booked - req.body.available))}`);
+    //todo 5. Update the quantities (InitialKg, availableKg) inside the updatedBagasi
+    // console.log('🙃', `availableKg: ${Math.abs((bagasi.bookedKg - req.body.availableKg))}, InitialKg: ${bagasi.bookedKg + Math.abs((bagasi.bookedKg - req.body.availableKg))}`);
     const updateIncrement = await Bagasi.findByIdAndUpdate(updatedBagasi, {
 
-        available: Math.abs((bagasi.booked - req.body.available)),
-        initial: bagasi.booked + Math.abs((bagasi.booked - req.body.available)),
+        availableKg: Math.abs((bagasi.bookedKg - req.body.availableKg)),
+        initialKg: bagasi.bookedKg + Math.abs((bagasi.bookedKg - req.body.availableKg)),
 
     }, {
         new: true,
         runValidators: true
     });
 
-    if (!updatedBagasi || !updateIncrement) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Anda', 400));
+    if (!updatedBagasi || !updateIncrement) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Kakak 😢', 400));
 
     res.status(200).json({
         status: 'done',
@@ -121,13 +121,13 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
 
     //todo 1. Check Bagasi Id
     const id = await Bagasi.findById(req.params.id);
-    if (!id) return next(new AppError('Bagasi yang Anda minta tidak ditemukan', 404));
+    if (!id) return next(new AppError('Bagasi yang Kakak minta tidak ditemukan 😢', 404));
 
     // todo 2. Check if he is the owner
-    if (id.owner._id.toString() !== req.user.id) return next(new AppError('Anda bukan pemilik/penjual bagasi ini. Akses di tolak', 401));
+    if (id.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemilik/penjual bagasi ini 😢. Akses di tolak ya Kak', 401));
 
     // todo 3. Check if bagasi has been ordered, request denied
-    if (id.booked > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel. Hubungi Admin', 401));
+    if (id.bookedKg > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel ya Kak 😢. Hubungi Admin', 401));
 
     //todo 4. Delete bagasiId from User.bagasi
     const user = await User.findById(req.user.id);
@@ -141,7 +141,7 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
 
     //todo 4. Delete bagasi document from Bagasi collection
     const bagasi = await Bagasi.findOneAndUpdate(id, { active: false });
-    if (!userBagasi || !bagasi) return next(new AppError('Terjadi kesalahan dalam menghapus bagasi Anda', 400));
+    if (!userBagasi || !bagasi) return next(new AppError('Terjadi kesalahan dalam menghapus bagasi Kakak 😢', 400));
 
     res.status(200).json({
         status: 'done',

@@ -18,17 +18,18 @@ const userSchema = new mongoose.Schema({
         // select: false //Jika ini di aktifkan, route /lupaPassword tidak berfungsi
     },
     telpon: {
-        type: Number,
-        required: [true, 'Demi mudahnya komunikasi, mohon sertakan nomor Telepon/WhatsApp Anda'],
-        minlength: 8,
-        maxlength: 17,
+        type: String,
+        required: [true, 'Demi mudahnya komunikasi, mohon sertakan nomor Telepon/WhatsApp Kakak'],
+        minLength: [8, 'Mohon berikan nomor Telpon/WhatsApp yang valid ya Kak 😃'],
+        maxLength: [17, 'Mohon berikan nomor Telpon/WhatsApp yang valid ya Kak 😃'],
         unique: true,
         // select: false,
     },
     password: {
         type: String,
         required: [true, 'Password minimal 6 karakter'],
-        minlength: 8,
+        minLength: [8, 'Panjang password antara 8 - 20 karakter ya Kak 😃'],
+        maxLength: [20, 'Panjang password antara 8 - 20 karakter ya Kak 😃'],
         select: false
     },
     passwordConfirm: {
@@ -38,7 +39,7 @@ const userSchema = new mongoose.Schema({
             validator: function (el) {
                 return el === this.password;//This.password refers to this document that currently being created or saved
             },
-            message: 'Password berbeda, mohon konfirmasi ulang.'
+            message: 'Konfirmasi password berbeda Kak 😢, mohon konfirmasi ulang.'
         },
         select: false //biar ga show up in any output
     },

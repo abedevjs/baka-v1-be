@@ -58,7 +58,7 @@ exports.masuk = catchAsync(async (req, res, next) => {
 
     const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !await user.checkPassword(password, user.password)) return next(new AppError('Email atau Password Anda salah', 401));//* user.checkPassword adalah method yang sy buat sendiri di userModel
+    if (!user || !await user.checkPassword(password, user.password)) return next(new AppError('Email atau Password Kakak salah', 401));//* user.checkPassword adalah method yang sy buat sendiri di userModel
 
     createSendToken(user, 200, res);
 });
@@ -68,7 +68,7 @@ exports.keluar = catchAsync(async (req, res, next) => {
     console.log(req.user);
     res.status(200).json({
         status: 'done',
-        message: 'Anda telah keluar'
+        message: 'Kakak telah keluar'
     });
 
 });
@@ -107,7 +107,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.user.id).select('+password');
 
     //todo 2. Check if posted current password is correct
-    if (!await user.checkPassword(req.body.passwordLama, user.password)) return next(new AppError('Password lama Anda salah', 401));
+    if (!await user.checkPassword(req.body.passwordLama, user.password)) return next(new AppError('Password lama Kakak salah 😢', 401));
 
     //todo 3. If current password is correct, update password
     user.password = req.body.password;
@@ -129,7 +129,7 @@ exports.lupaPassword = catchAsync(async (req, res, next) => {
 
     //todo 3. Send reset token to user email
     const resetURL = `${req.protocol}://${req.get('host')}/user/resetPassword/${resetToken}`;
-    const message = `Kirim permintaan ini ke ${resetURL}.\n Jika Anda tidak lupa password, abaikan pesan ini.`;
+    const message = `Kirim permintaan ini ke ${resetURL}.\n Jika Kakak tidak lupa password, abaikan pesan ini.`;
 
     try {
         await sendEmail({

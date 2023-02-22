@@ -7,20 +7,20 @@ const orderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now()
     },
-    jumlah: {
+    jumlahKg: {
         type: Number,
-        required: [true, 'Berapa jumlah bagasi yg Anda ingin beli?'],
-        min: [1, 'Jumlah minimal 1']
+        required: [true, 'Berapa jumlahKg bagasi yg ingin Kakak beli?'],
+        min: [1, 'jumlahKg minimal 1']
     },
     isi: {
         type: String,
-        required: [true, 'Apa isi bagasi Anda?'],
+        required: [true, 'Isi dulu Bagasi nya ya Kak 😃'],
         trim: true,
-        maxlength: 30,
+        maxLength: 30,
     },
-    biaya: {
+    biayaRp: {
         type: Number,//dari front end (form calculate sendiri)
-        required: [true, 'Berapa biaya bagasi ini?'],
+        required: [true, 'Berapa biayaRp bagasi ini?'],
         min: 0
     },
     pembayaran: {//Upload bukti pembayaran
@@ -51,9 +51,9 @@ orderSchema.post('save', async function () {
 
     await Bagasi.findByIdAndUpdate(bagasiId, {
         $inc: {
-            available: -this.jumlah,
-            booked: +this.jumlah,
-            balance: +this.biaya
+            availableKg: -this.jumlahKg,
+            bookedKg: +this.jumlahKg,
+            balanceRp: +this.biayaRp
         },
         $push: {
             order: this._id
@@ -68,15 +68,15 @@ orderSchema.post('save', async function () {
     })
 });
 
-orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, available, booked dan balance bagasinya ter update. Fn ini di called di orderController.deleteOrder()
+orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, availableKg, bookedKg dan balanceRp bagasinya ter update. Fn ini di called di orderController.deleteOrder()
     const currentDocument = this._conditions;
 
     const bagasiId = currentDocument.bagasi._id;
     await Bagasi.findByIdAndUpdate(bagasiId, {
         $inc: {
-            available: +currentDocument.jumlah,
-            booked: -currentDocument.jumlah,
-            balance: -currentDocument.biaya
+            availableKg: +currentDocument.jumlahKg,
+            bookedKg: -currentDocument.jumlahKg,
+            balanceRp: -currentDocument.biayaRp
         },
     });
 
