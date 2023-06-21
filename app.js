@@ -37,15 +37,16 @@ app.use(session({
     resave: false,//we dont want to save a session if nothing is modified
     saveUninitialized: false,//dont create a session until something is stored
 
-    // store: MongoStore.create({ //* LOCAL database
-    //     mongoUrl: process.env.DATABASE_LOCAL,
-    //     ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
-
-    // }),
-    store: MongoStore.create({ //* REMOTE database
-        mongoUrl: process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD),
+    store: MongoStore.create({ //* LOCAL database
+        mongoUrl: process.env.DATABASE_LOCAL,
         ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
+
     }),
+    
+    // store: MongoStore.create({ //* REMOTE database
+    //     mongoUrl: process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD),
+    //     ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
+    // }),
 
     // cookie: { secure: true } //this wont work without https
   }))

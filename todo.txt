@@ -56,20 +56,20 @@ AUTHENTICATION
 ✅ 5. Applying Oauth fb
 ✅ 11. Implementasi kan FBOauth. Agar regisnya cukup lwt google dan fb saja
 ✅ 1. update authCtrl.keluar(). tokennya clear
-    -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??. Answer: auth dan cookies di handle passport
-    -bagaimana cara kita tahu jika user ter logged in?. Answer: auth dan cookies di handle passport
-3. Auth Controller path khusus Admin
-7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+    -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??. 🟢Answer: auth dan cookies di handle passport
+    -bagaimana cara kita tahu jika user ter logged in?. 🟢Answer: auth dan cookies di handle passport
+✅ 3. Auth Controller path khusus Admin
+7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
 
 
 
 
 BAGASI
-6. Fee utk admin. Strategi:
+✅ 6. Fee utk admin. Strategi: 🟢Answer: Fee utk admin menggunakan percentage dari total transaksi
     di bagasiModel:
     adminFee = hargaRp
     jika hargaRp di update oleh user, maka hargaRp tertinggi masih tetap sebagai adminFee
-7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
 12. Saat createBagasi atau createOrder, minta nomor wa nya
 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinya
 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)

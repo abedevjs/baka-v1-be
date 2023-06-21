@@ -2,7 +2,7 @@ const crypto = require('crypto');//NodeJS built-in password hasher
 const { promisify } = require('util');//Express built-in asyncronous function
 const jwt = require('jsonwebtoken');
 const User = require('./../model/userModel');
-const UserGoogle = require('./../model/userGoogleModel');
+const UserAuth = require('../model/userAuthModel');
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
 const sendEmail = require('./../utility/email');
@@ -14,7 +14,7 @@ exports.restrictTo = (...roles) => {
     return (req, res, next) => {
         console.log(roles, req.user);
         if (!roles.includes(req.user.role)) {
-            return next(new AppError('You do not have permission to access', 403));
+            return next(new AppError('Halaman ini khusus utk admin: Abe 😠', 403));
         };
 
         next();
@@ -225,14 +225,14 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
     //* Klo ini pake cara 2
     if (!googleUser.verified_email) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401))
 
-    const newGoogleUser = await UserGoogle.create({
+    const newGoogleUser = await UserAuth.create({
         nama: googleUser.name,
         email: googleUser.email,
         image: googleUser.picture,
     })
 
-    //todo 6. Copy newUserGoogle document ke User collection. Karena operasi manipulasi data (bagasi, order) dari User collection.
-    const copyUserGoogleToUser = await UserGoogle.aggregate([
+    //todo 6. Copy newUserAuth document ke User collection. Karena operasi manipulasi data (bagasi, order) dari User collection.
+    const copyUserGoogleToUser = await UserAuth.aggregate([
 
         {
             $match: {
@@ -281,11 +281,12 @@ exports.authGoogleHandlerRedirect = passport.authenticate('google', { failureRed
 exports.authFacebookHandler = passport.authenticate('facebook', { scope: ['public_profile', 'email'] });
 //! auth Facebook dgn Passport -- end
 
-exports.private = (req, res, next) => {
+exports.authenticate = (req, res, next) => {
     console.log(req.user);
     if(req.isAuthenticated()) return next();
-
+    
     res.redirect('/');
+    // return next(new AppError('Mohon login kembali', 401));
 };
 
 exports.public = (req, res, next) => {

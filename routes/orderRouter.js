@@ -9,7 +9,7 @@ const orderRouter = express.Router({ mergeParams: true });
 //* www.nama.com/order
 //* www.nama.com/bagasi/:bagasiId/order
 orderRouter.route('/')
-    .get(authController.private, orderController.getAllOrder)
+    .get(authController.authenticate, orderController.getAllOrder)
     .post(authController.protect, orderController.createOrder)
 
 //* www.nama.com/order/:id

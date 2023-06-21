@@ -1,7 +1,8 @@
 // const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy
-const UserGoogle = require('../model/userGoogleModel');
+const UserAuth = require('../model/userAuthModel');
+const createSendToken = require('../controller/authController')
 
 //! Using PASSPORT -- start ----------------------------------
 
@@ -24,12 +25,12 @@ module.exports = function(passport) {
                 };
 
                 try {
-                    let user = await UserGoogle.findOne({googleID: profile.id});
+                    let user = await UserAuth.findOne({googleID: profile.id});
 
                     if(user) {
                         done(null, user);
                     } else {
-                        user = await UserGoogle.create(newUser);
+                        user = await UserAuth.create(newUser);
                         done(null, user);
                     };
 
@@ -57,12 +58,12 @@ module.exports = function(passport) {
                 };
 
                 try {
-                    let user = await UserGoogle.findOne({facebookID: profile.id});
+                    let user = await UserAuth.findOne({facebookID: profile.id});
 
                     if(user) {
                         done(null, user);
                     } else {
-                        user = await UserGoogle.create(newUser);
+                        user = await UserAuth.create(newUser);
                         done(null, user);
                     };
 
@@ -81,7 +82,7 @@ module.exports = function(passport) {
     });
     
     passport.deserializeUser((id, done) => {
-        UserGoogle.findById(id, (err, user) => {
+        UserAuth.findById(id, (err, user) => {
             done(err, user);
         });
     });
