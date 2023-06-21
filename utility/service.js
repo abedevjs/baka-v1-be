@@ -24,6 +24,7 @@ exports.getGoogleOauthTokens = async (code) => {
 
     } catch (error) {
         console.log('😃 service.js error:', error);
+        throw new Error('⛴️', error.message);
     }
 }
 

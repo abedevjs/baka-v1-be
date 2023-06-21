@@ -9,6 +9,19 @@ const sendEmail = require('./../utility/email');
 const { token } = require('morgan');
 const { findById } = require('../model/bagasiModel');
 
+exports.restrictTo = (...roles) => {
+
+    return (req, res, next) => {
+        console.log(roles, req.user);
+        if (!roles.includes(req.user.role)) {
+            return next(new AppError('You do not have permission to access', 403));
+        };
+
+        next();
+    }
+};
+
+//! --------------------IMPLEMENTASI AUTH DGN EMAIL DAN PASSWORD --start -------------- //
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN
@@ -175,22 +188,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     createSendToken(user, 200, res);
 });
 
-exports.restrictTo = (...roles) => {
+//! --------------------IMPLEMENTASI AUTH DGN EMAIL DAN PASSWORD --end -------------- //
 
-    return (req, res, next) => {
-        console.log(roles, req.user);
-        if (!roles.includes(req.user.role)) {
-            return next(new AppError('You do not have permission to access', 403));
-        };
-
-        next();
-    }
-};
-
-//* ---------------------------------------------------------------------------------------------
+//! --------------------IMPLEMENTASI AUTH DGN GOOGLE DAN FACEBOOK --start -------------- //
 
 const service = require('../utility/service');
+const passport = require('passport');
 
+//! Oauth Google tanpa Passport -- start
 //* dari tombol 'Login with Google' UI masuk kesini
 exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn handle this callback url www.nama.com/oauth/google
 
@@ -208,13 +213,17 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
 
     //todo 4. Get Google User with tokens
     //* Cara 1, melalui jsonwebtoken yg sdh di signed oleh Google
-    const googleUser = jwt.decode(id_token);
+    // const googleUser = jwt.decode(id_token);
 
     //* Cara 2, melalui Google API
-    // const googleUser = await service.getGoogleUser(id_token, access_token);
+    const googleUser = await service.getGoogleUser(id_token, access_token);
 
     //todo 5. Upsert(update) the User in the database
-    if (!googleUser.email_verified) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401))
+    //* Klo ini pake cara 1
+    // if (!googleUser.email_verified) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401));
+
+    //* Klo ini pake cara 2
+    if (!googleUser.verified_email) return next(new AppError('Email kakak belum di verifikasi oleh Google. Verifikasi dulu ya kak 🙂', 401))
 
     const newGoogleUser = await UserGoogle.create({
         nama: googleUser.name,
@@ -255,3 +264,33 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
 
     createSendToken(newUser, 201, res);
 });
+//! Oauth Google tanpa Passport -- start
+
+//! auth Google dgn Passport -- start
+//* www.domain.com/auth/google
+exports.authGoogleHandler = passport.authenticate('google', { scope: ['profile', 'email'] });
+
+//* www.domain.com/auth/google/redirect
+exports.authGoogleHandlerRedirect = passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+    res.redirect('/bagasi');
+};
+//! auth Google dgn Passport -- end
+
+//! auth Facebook dgn Passport -- start
+//* www.domain.com/auth/facebook
+exports.authFacebookHandler = passport.authenticate('facebook', { scope: ['public_profile', 'email'] });
+//! auth Facebook dgn Passport -- end
+
+exports.private = (req, res, next) => {
+    console.log(req.user);
+    if(req.isAuthenticated()) return next();
+
+    res.redirect('/');
+};
+
+exports.public = (req, res, next) => {
+    if(req.isAuthenticated()) res.redirect('/');
+    return next();
+};
+
+//! --------------------IMPLEMENTASI AUTH DGN GOOGLE DAN FACEBOOK --start -------------- //

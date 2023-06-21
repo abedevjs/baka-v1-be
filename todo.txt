@@ -1,21 +1,113 @@
-1. update authCtrl.keluar(). tokennya clear
+🔴 1. update authCtrl.keluar(). tokennya clear
     -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??
 
-2. Kondisi boleh update order apa saja ialah:
+🔴 2. Kondisi boleh update order apa saja ialah:
     a. jika order belum dibayar/lunas. Jika sudah lunas, silahkan buat order baru.
     b. solusi updateOrder:
     user hanya bisa order bagasi yang sama 3 kali. PENDING
 
-3. Auth Controller path khusus Admin
+🔴 3. Auth Controller path khusus Admin
 
-4. Get User utk manipulate data User
+🔴 4. Get User utk manipulate data User
 
-5. Applying Oauth fb
+🔴 5. Applying Oauth fb
 
-6. 
+🔴 6. Fee utk admin. Strategi:
+    di bagasiModel:
+    adminFee = hargaRp
+    jika hargaRp di update oleh user, maka hargaRp tertinggi masih tetap sebagai adminFee
+
+🔴 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+8. Klo user updatePassword bukan user.save() tapi user.findByIdAndUpdate()
+🔴 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinya
+🔴 10. upload fitur dokumen utk createBagasi dan createOrder
+🔴 11. Implementasi kan FBOauth. Agar regisnya cukup lwt google dan fb saja
+🔴 12. Saat createBagasi atau createOrder, minta nomor wa nya
+🔴 13. modelBagasi tambahkan tanggal kedatangan
+🔴 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
+🔴 15. buat waktuKedatangan di bagasiModel
+🔴 16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
+🔴 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
+18. Buat pilihan harga diskon di bagasiModel?
+🔴 19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
+🔴 20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
+🔴21. Buat Collection: delayedOrder. Jadi saat user createOrder, order tsb hnya berstatus 'delayed' dan datanya masuk ke Collection delayedOrder. Selanjutnya,
+    admin secara manual memeriksa bukti pembayaran. Jika sukses, admin eksekusi fn activateOrder yg datax diambil dr Collection delayedOrder yg manipulate db Bagasi, db Order, dan db User dan status order tersebut jadi 'Ready'.
+🔴 22. Jika status order sdh 'Ready', user tidak bisa membatalkan order nya. Kecuali, jika traveler nya tdk brkt.
+23. Buat Collection Jastip. Model: isi pesanan (textarea), budget, buktipayment, dari, tujuan. Setelah payment valid, baka lokal/tujuan keluar utk belanja pesanan jastiper.
+    Setelah sukses belanja, lapor ke jastiper. Terus lanjut beli bagasi melalui akun resmi baka dan minta payment beli bagasi dari jastiper tsb utk dikirim lokasi jastiper.
+🔴 24. Order tdk bisa di edit/delete setelah status 'Ready'.
+🔴 25. Status Order: Preparing (jika masih tunggu cek status pembayaran) dan Ready (jika pembayaran valid).
+🔴 26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder.
+🔴 27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
+🔴 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
+🔴 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
 
 
 setelah Oauth: strategy sementara:
 setelah new UserGoogle.create({}) buat copy ke User model dengan UserGoogle.aggregate([{}])
 jika ada copy di User, seluruh operasional di bagasiController, orderController, userController hanya pakai User model
 
+/////////////////////////////////////////////////////////////////
+
+TODO:
+
+AUTHENTICATION
+✅ 5. Applying Oauth fb
+✅ 11. Implementasi kan FBOauth. Agar regisnya cukup lwt google dan fb saja
+✅ 1. update authCtrl.keluar(). tokennya clear
+    -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??. Answer: auth dan cookies di handle passport
+    -bagaimana cara kita tahu jika user ter logged in?. Answer: auth dan cookies di handle passport
+3. Auth Controller path khusus Admin
+7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+
+
+
+
+BAGASI
+6. Fee utk admin. Strategi:
+    di bagasiModel:
+    adminFee = hargaRp
+    jika hargaRp di update oleh user, maka hargaRp tertinggi masih tetap sebagai adminFee
+7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+12. Saat createBagasi atau createOrder, minta nomor wa nya
+9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinya
+14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
+10. upload fitur dokumen utk createBagasi dan createOrder
+13. modelBagasi tambahkan tanggal kedatangan
+28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
+15. buat waktuKedatangan di bagasiModel
+16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
+17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
+19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
+26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder.
+29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
+
+
+
+
+ORDER
+2. Kondisi boleh update order apa saja ialah:
+    a. jika order belum dibayar/lunas. Jika sudah lunas, silahkan buat order baru.
+    b. solusi updateOrder:
+    user hanya bisa order bagasi yang sama 3 kali. PENDING
+7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+12. Saat createBagasi atau createOrder, minta nomor wa nya
+10. upload fitur dokumen utk createBagasi dan createOrder
+14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
+16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
+17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
+20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
+21. Buat Collection: delayedOrder. Jadi saat user createOrder, order tsb hnya berstatus 'delayed' dan datanya masuk ke Collection delayedOrder. Selanjutnya,
+    admin secara manual memeriksa bukti pembayaran. Jika sukses, admin eksekusi fn activateOrder yg datax diambil dr Collection delayedOrder yg manipulate db Bagasi, db Order, dan db User dan status order tersebut jadi 'Ready'.
+22. Jika status order sdh 'Ready', user tidak bisa membatalkan order nya. Kecuali, jika traveler nya tdk brkt.
+24. Order tdk bisa di edit/delete setelah status 'Ready'.
+25. Status Order: Preparing (jika masih tunggu cek status pembayaran) dan Ready (jika pembayaran valid).
+27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
+29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
+
+
+
+
+USER
+4. Get User utk manipulate data User

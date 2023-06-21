@@ -4,9 +4,19 @@ const userSchema = new mongoose.Schema({
     nama: {
         type: String
     },
+    googleID: {
+        type: String,
+        // required: true
+    },
+    facebookID: {
+        type: String,
+        // required: true
+    },
     email: {
         type: String,
-        unique: true
+    },
+    provider: {
+        type: String
     },
     telpon: {
         type: String
