@@ -28,6 +28,10 @@ const orderSchema = new mongoose.Schema({
         default: 'Pembayaran akan di buat',
         select: false
     },
+    catatan: {
+        type: String,
+        maxLength: [60, 'Pesan nya terlalu panjang kak']
+    },
     status: {
         type: String,
         enum: {

@@ -51,6 +51,10 @@ const bagasiSchema = new mongoose.Schema({
         default: 'Upload document akan di buat',
         select: false
     },
+    catatan: {
+        type: String,
+        maxLength: [60, 'Pesan nya terlalu panjang kak']
+    },
     status: {
         type: String,
         enum: {

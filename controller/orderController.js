@@ -3,7 +3,6 @@ const User = require('./../model/userModel');
 const Bagasi = require('./../model/bagasiModel')
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
-const { hapusUser } = require('./userController');
 
 exports.getAllOrder = catchAsync(async (req, res, next) => {
     let query = Order.find();
@@ -48,26 +47,43 @@ exports.getOneOrder = catchAsync(async (req, res, next) => {
 
 exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bagasi/:bagasiId/order
 
+    //todo 1. Cek if the bagasi still exists
     const bagId = await Bagasi.findById(req.params.bagasiId);
     if (!bagId) return next(new AppError('Bagasi yang ingin Kakak order tidak tersedia 😢', 404));
 
-    //todo 1. Cek owner bagasi tidak boleh order bagasi sendiri
+    //todo 2. Cek owner bagasi tidak boleh order bagasi sendiri
     if (bagId.owner._id.toString() === req.user.id) return next(new AppError('Kakak tidak boleh membeli bagasi sendiri 😢', 403));
 
-    //todo 2. Cek user tdk punya lebih dari 5 aktif order
+    //todo 3. Cek user tdk punya lebih dari 5 aktif order di bagasi yang berbeda2.
     if (req.user.order.length >= 5) return next(new AppError('Kakak hanya boleh memiliki 5 order aktif 😢', 403));
 
-    //todo 3.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
+    //todo 4.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
     if (req.user.orderBagasiId.includes(req.params.bagasiId)) return next(new AppError('Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃', 403));
 
-    //todo 4. Cek if bagasi is overloaded, request denied
+    //todo 5. Cek if bagasi is overloaded, request denied
     if (bagId.availableKg < req.body.jumlahKg) return next(new AppError('Bagasi yang Kakak pesan telah memenuhi kapasitas 😢, koreksi jumlah pesanan nya ya Kak', 401));
 
-    //todo 5. Jika semua kondisi diatas terpenuhi, create order
+    //todo 6. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
+    const user = await User.findById(req.user.id);
+
+    if (!user.telpon) {
+        const addTelponToUser = await User.findByIdAndUpdate(user, {
+            telpon: req.body.telpon
+        }, {
+            new: true,
+            runValidators: true,
+        });
+    
+        if(!addTelponToUser.telpon) return next(new AppError('Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢', 400));
+        if(!addTelponToUser) return next(new AppError('Kesalahan dalam menambahkan nomor telpon Kakak 😢', 400));  
+    };
+
+    //todo 6. Jika semua kondisi diatas terpenuhi, create order
     const order = await Order.create({
         jumlahKg: req.body.jumlahKg,
         isi: req.body.isi,
         biayaRp: req.body.biayaRp,
+        catatan: req.body.catatan,
         owner: await User.findById(req.user.id), //* Embedding
         bagasi: await Bagasi.findById(bagId), //* Embedding
     });
@@ -107,6 +123,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
         jumlahKg: req.body.jumlahKg,
         isi: req.body.isi,
         biayaRp: req.body.biayaRp,
+        catatan: req.body.catatan,
 
     },
         {

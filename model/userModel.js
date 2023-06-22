@@ -19,10 +19,10 @@ const userSchema = new mongoose.Schema({
     },
     telpon: {
         type: String,
-        required: [true, 'Demi mudahnya komunikasi, mohon sertakan nomor Telepon/WhatsApp Kakak'],
-        minLength: [8, 'Mohon berikan nomor Telpon/WhatsApp yang valid ya Kak 😃'],
-        maxLength: [17, 'Mohon berikan nomor Telpon/WhatsApp yang valid ya Kak 😃'],
-        unique: true,
+        // required: [true, 'Demi mudahnya komunikasi, mohon sertakan nomor Telepon/WhatsApp Kakak'],
+        minLength: [8, 'Nomor telpon minimal 8 digit ya Kak 😃'],
+        maxLength: [17, 'Nomor telpon maximal 17 digit ya Kak 😃'],
+        // unique: true,
         // select: false,
     },
     password: {

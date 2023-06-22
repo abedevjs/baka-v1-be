@@ -22,7 +22,7 @@
 🔴 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinya
 🔴 10. upload fitur dokumen utk createBagasi dan createOrder
 🔴 11. Implementasi kan FBOauth. Agar regisnya cukup lwt google dan fb saja
-🔴 12. Saat createBagasi atau createOrder, minta nomor wa nya
+🔴 12. Saat createBagasi atau createOrder, minta nomor wa nya jika telpon user empty
 🔴 13. modelBagasi tambahkan tanggal kedatangan
 🔴 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 🔴 15. buat waktuKedatangan di bagasiModel
@@ -42,6 +42,8 @@
 🔴 27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
 🔴 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
 🔴 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
+🔴 30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
+    Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
 
 
 setelah Oauth: strategy sementara:
@@ -59,7 +61,7 @@ AUTHENTICATION
     -bagaimana dgn login? logout? apa hubuganya dengan access token dan refresh token di google??. 🟢Answer: auth dan cookies di handle passport
     -bagaimana cara kita tahu jika user ter logged in?. 🟢Answer: auth dan cookies di handle passport
 ✅ 3. Auth Controller path khusus Admin
-7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
+✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
 
 
 
@@ -69,10 +71,10 @@ BAGASI
     di bagasiModel:
     adminFee = hargaRp
     jika hargaRp di update oleh user, maka hargaRp tertinggi masih tetap sebagai adminFee
-7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
-12. Saat createBagasi atau createOrder, minta nomor wa nya
-9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinya
-14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
+✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
+✅ 12. Saat createBagasi atau createOrder, minta nomor wa nya jika telpon user empty
+✅ 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinyas
+✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 10. upload fitur dokumen utk createBagasi dan createOrder
 13. modelBagasi tambahkan tanggal kedatangan
 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
@@ -94,7 +96,7 @@ ORDER
 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
 12. Saat createBagasi atau createOrder, minta nomor wa nya
 10. upload fitur dokumen utk createBagasi dan createOrder
-14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
+✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
 20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
@@ -105,6 +107,8 @@ ORDER
 25. Status Order: Preparing (jika masih tunggu cek status pembayaran) dan Ready (jika pembayaran valid).
 27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
+30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
+    Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
 
 
 

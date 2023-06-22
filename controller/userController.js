@@ -36,17 +36,15 @@ exports.profil = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.update = catchAsync(async (req, res, next) => {
+exports.update = catchAsync(async (req, res, next) => { //* Hanya bisa update nomor telpon karena pakai UserAuth
     //todo 1. Create error if user POSTs password data
     if (req.body.password || req.body.passwordConfirm) return next(new AppError('Updating for password on route /updatePassword', 401));
 
     //todo 2. Filter hanya object yang di inginkan
     // filterBody(req.body, 'nama', 'email', 'telpon');
 
-    //todo 3. Update user document
+    //todo 3. Update user document. Hanya bisa update nomor telpon karena pakai UserAuth
     const updatedUser = await User.findByIdAndUpdate(req.user.id, {
-        nama: req.body.nama,
-        email: req.body.email,
         telpon: req.body.telpon
     }, {
         new: true,

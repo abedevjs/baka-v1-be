@@ -47,9 +47,25 @@ exports.getOneBagasi = catchAsync(async (req, res, next) => {
 });
 
 exports.createBagasi = catchAsync(async (req, res, next) => {
-    //todo Preventing create more than 3 bagasi
+    //todo 1. Preventing create more than 3 bagasi
     if (req.user.bagasi.length >= 3) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
 
+    //todo 2. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
+    const user = await User.findById(req.user.id);
+
+    if (!user.telpon) {
+        const addTelponToUser = await User.findByIdAndUpdate(user, {
+            telpon: req.body.telpon
+        }, {
+            new: true,
+            runValidators: true,
+        });
+    
+        if(!addTelponToUser.telpon) return next(new AppError('Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢', 400));
+        if(!addTelponToUser) return next(new AppError('Kesalahan dalam menambahkan nomor telpon Kakak 😢', 400));  
+    };
+
+    //todo 3. If all those conditions above is fulfilled, create new Bagasi.
     const bagasi = await Bagasi.create({
         dari: req.body.dari,
         tujuan: req.body.tujuan,
@@ -57,6 +73,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
         pesawat: req.body.pesawat,
+        catatan: req.body.catatan,
         owner: await User.findById(req.user.id)
     });
 
@@ -89,7 +106,7 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
         hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
         pesawat: req.body.pesawat,
-
+        catatan: req.body.catatan,
     }, {
         new: true,
         runValidators: true
