@@ -45,6 +45,11 @@
 🔴 30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
     Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
 
+    31. Suatu hari buat fitur Jastip (jastipModel, jastipController, jastipRouter). Jadi user bisa buat list barang yg mau dia pesan/jastip dr luar negeri/indonesia.
+        isinya ada listPesanan, negara tujuan, bujet, pembayaran, catatan. 
+        Kemudian asetLokalBaka di negara tujuan belikan jastip tersebut memakai akun adminBaka/bakaLokal, 
+        kemudian barang Jastip tersebut di titip dgn cara booking bagasi travaler di bakaApp
+
 
 setelah Oauth: strategy sementara:
 setelah new UserGoogle.create({}) buat copy ke User model dengan UserGoogle.aggregate([{}])
@@ -75,7 +80,7 @@ BAGASI
 ✅ 12. Saat createBagasi atau createOrder, minta nomor wa nya jika telpon user empty
 ✅ 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinyas
 ✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
-10. upload fitur dokumen utk createBagasi dan createOrder
+✅ 10. upload fitur dokumen utk createBagasi dan createOrder
 13. modelBagasi tambahkan tanggal kedatangan
 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
 15. buat waktuKedatangan di bagasiModel
@@ -93,9 +98,9 @@ ORDER
     a. jika order belum dibayar/lunas. Jika sudah lunas, silahkan buat order baru.
     b. solusi updateOrder:
     user hanya bisa order bagasi yang sama 3 kali. PENDING
-7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
-12. Saat createBagasi atau createOrder, minta nomor wa nya
-10. upload fitur dokumen utk createBagasi dan createOrder
+✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
+✅ 12. Saat createBagasi atau createOrder, minta nomor wa nya
+✅ 10. upload fitur dokumen utk createBagasi dan createOrder
 ✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
@@ -115,3 +120,9 @@ ORDER
 
 USER
 4. Get User utk manipulate data User
+
+
+
+❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
+❗Don’t forget security Middleware
+❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table)

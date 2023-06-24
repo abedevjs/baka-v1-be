@@ -3,6 +3,10 @@ const User = require('./../model/userModel');
 const Bagasi = require('./../model/bagasiModel')
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
+const multerUpload = require('../utility/multer');
+
+
+exports.uploadMiddleware = multerUpload.single('dokumen'); 
 
 exports.getAllOrder = catchAsync(async (req, res, next) => {
     let query = Order.find();
@@ -46,24 +50,25 @@ exports.getOneOrder = catchAsync(async (req, res, next) => {
 });
 
 exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bagasi/:bagasiId/order
+    //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
-    //todo 1. Cek if the bagasi still exists
+    //todo 2. Cek if the bagasi still exists
     const bagId = await Bagasi.findById(req.params.bagasiId);
     if (!bagId) return next(new AppError('Bagasi yang ingin Kakak order tidak tersedia 😢', 404));
 
-    //todo 2. Cek owner bagasi tidak boleh order bagasi sendiri
+    //todo 3. Cek owner bagasi tidak boleh order bagasi sendiri
     if (bagId.owner._id.toString() === req.user.id) return next(new AppError('Kakak tidak boleh membeli bagasi sendiri 😢', 403));
 
-    //todo 3. Cek user tdk punya lebih dari 5 aktif order di bagasi yang berbeda2.
+    //todo 4. Cek user tdk punya lebih dari 5 aktif order di bagasi yang berbeda2.
     if (req.user.order.length >= 5) return next(new AppError('Kakak hanya boleh memiliki 5 order aktif 😢', 403));
 
-    //todo 4.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
+    //todo 5.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
     if (req.user.orderBagasiId.includes(req.params.bagasiId)) return next(new AppError('Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃', 403));
 
-    //todo 5. Cek if bagasi is overloaded, request denied
+    //todo 6. Cek if bagasi is overloaded, request denied
     if (bagId.availableKg < req.body.jumlahKg) return next(new AppError('Bagasi yang Kakak pesan telah memenuhi kapasitas 😢, koreksi jumlah pesanan nya ya Kak', 401));
 
-    //todo 6. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
+    //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
     const user = await User.findById(req.user.id);
 
     if (!user.telpon) {
@@ -78,11 +83,23 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
         if(!addTelponToUser) return next(new AppError('Kesalahan dalam menambahkan nomor telpon Kakak 😢', 400));  
     };
 
-    //todo 6. Jika semua kondisi diatas terpenuhi, create order
+    //todo 8. Check if the upload file not exceed than 5mb
+    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
+    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
+
+    let updateDokumen = req.body.dokumen; 
+
+    if(req.file) {
+        updateDokumen = req.file.filename
+        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
+    };
+
+    //todo 9. Jika semua kondisi diatas terpenuhi, create order
     const order = await Order.create({
         jumlahKg: req.body.jumlahKg,
         isi: req.body.isi,
         biayaRp: req.body.biayaRp,
+        dokumen: updateDokumen, //naming dokumen using the uploaded original file name
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id), //* Embedding
         bagasi: await Bagasi.findById(bagId), //* Embedding
@@ -100,29 +117,42 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
 });
 
 exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/634a9ae426fc2de08774ae4a
-    //todo 1. Check if Order is exist
+    //todo 1. Upload file sudah di handle oleh midware multer di utility file
+
+    //todo 2. Check if Order is exist
     const order = await Order.findById(req.params.id);
     if (!order) return next(new AppError('Order yang Kakak minta tidak tersedia 😢', 404));
 
-    //todo 2. Check if Bagasi is exist
+    //todo 3. Check if Bagasi is exist
     const bagasi = order.bagasi;
     const currentBagasi = await Bagasi.findById(bagasi._id)
     if (!currentBagasi) return next(new AppError('Bagasi yang kakak minta tidak tersedia 😢', 404))
 
-    //todo 3. Check if User is owner
+    //todo 4. Check if User is owner
     if (order.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemesan/pembeli bagasi ini 😢. Akses di tolak ya Kak', 401));
 
-    //todo 4. Cek if bagasi is overloaded, request denied
+    //todo 5. Cek if bagasi is overloaded, request denied
     // req.body.jumlahKg = 46, order.jumlahKg = 15. currentBagasi.initialKg = 60, currentBagasi.avail = 15, currentBagasi.bookedKg = 45
     // console.log(`😂, req.body.jumlahKg:${req.body.jumlahKg}, order.jumlahKg:${order.jumlahKg}, currentBagasi.initialKg:${currentBagasi.initialKg}, currentBagasi.availableKg:${currentBagasi.availableKg}, currentBagasi.bookedKg:${currentBagasi.bookedKg},`);
     if ((order.jumlahKg + req.body.jumlahKg) > currentBagasi.availableKg && req.body.jumlahKg > (order.jumlahKg + currentBagasi.availableKg)) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
 
+    //todo 5. Check if user update the upload file, make sure it's not exceed than 5mb
+    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
+    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
 
-    //todo 5. Update Order
+    let updateDokumen = req.body.dokumen; 
+
+    if(req.file) {
+        updateDokumen = req.file.filename
+        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
+    }
+
+    //todo 6. Update Order
     const updatedOrder = await Order.findByIdAndUpdate(order, {
         jumlahKg: req.body.jumlahKg,
         isi: req.body.isi,
         biayaRp: req.body.biayaRp,
+        dokumen: updateDokumen,
         catatan: req.body.catatan,
 
     },

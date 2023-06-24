@@ -23,10 +23,11 @@ const orderSchema = new mongoose.Schema({
         required: [true, 'Berapa biayaRp bagasi ini?'],
         min: 0
     },
-    pembayaran: {//Upload bukti pembayaran
+    dokumen: {//Upload bukti pembayaran
         type: String,
-        default: 'Pembayaran akan di buat',
-        select: false
+        default: 'Upload document akan di cek manual oleh Admin',
+        required: [true, 'Mohon upload bukti pembayaran Kak 🥲']
+        // select: false
     },
     catatan: {
         type: String,

@@ -44,12 +44,14 @@ const bagasiSchema = new mongoose.Schema({
     },
     pesawat: {
         type: String,
-        required: [true, 'Sertakan nama pesawat yang ditumpangi']
+        default: 'Maskapai akan di update manual oleh Admin'
+        // required: [true, 'Sertakan nama pesawat yang ditumpangi']
     },
     dokumen: {//Upload bukti keberangkatan
         type: String,
-        default: 'Upload document akan di buat',
-        select: false
+        default: 'Upload document akan di cek manual oleh Admin',
+        required: [true, 'Mohon upload tiket keberangkatan Kak']
+        // select: false
     },
     catatan: {
         type: String,

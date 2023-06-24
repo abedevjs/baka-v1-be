@@ -10,12 +10,12 @@ const orderRouter = express.Router({ mergeParams: true });
 //* www.nama.com/bagasi/:bagasiId/order
 orderRouter.route('/')
     .get(authController.protect, orderController.getAllOrder)
-    .post(authController.protect, orderController.createOrder)
+    .post(authController.protect, orderController.uploadMiddleware, orderController.createOrder)
 
 //* www.nama.com/order/:id
 orderRouter.route('/:id')
     .get(authController.protect, orderController.getOneOrder)
-    .patch(authController.protect, orderController.updateOrder)
+    .patch(authController.protect, orderController.uploadMiddleware, orderController.updateOrder)
     .delete(authController.protect, orderController.deleteOrder)
 
 
