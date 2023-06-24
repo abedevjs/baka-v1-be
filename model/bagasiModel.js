@@ -23,11 +23,6 @@ const bagasiSchema = new mongoose.Schema({
         type: Date,
         required: [true, 'Isi waktu tiba'],
     },
-    hargaRp: {
-        type: Number,
-        required: [true, 'Pastikan harga bagasi per Kg'],
-        min: [1, 'Harga tidak valid']
-    },
     initialKg: {
         type: Number,
         default: 0
@@ -42,9 +37,18 @@ const bagasiSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    hargaRp: {
+        type: Number,
+        required: [true, 'Pastikan harga bagasi per Kg'],
+        min: [1, 'Harga tidak valid']
+    },
     balanceRp: {
         type: Number,
         default: 0,
+    },
+    adminFeeRp: {
+        type: Number,
+        default: 0
     },
     pesawat: {
         type: String,

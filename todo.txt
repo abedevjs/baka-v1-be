@@ -127,3 +127,7 @@ USER
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
 ❗Don’t forget security Middleware
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table)
+
+const bagasi = await Bagasi.findOne(bagasiId)
+adminFeeRp: +((this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX),
+balanceRp: +((this.jumlahKg * bagasi.hargaRp) - (this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX), 

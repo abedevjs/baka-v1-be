@@ -23,6 +23,10 @@ const orderSchema = new mongoose.Schema({
         required: [true, 'Berapa biayaRp bagasi ini?'],
         min: 0
     },
+    adminFeeRp: {
+        type: Number,
+        default: 0
+    },
     dokumen: {//Upload bukti pembayaran
         type: String,
         default: 'Upload document akan di cek manual oleh Admin',
@@ -38,7 +42,7 @@ const orderSchema = new mongoose.Schema({
         enum: {
             values: ['Preparing', 'Ready', 'Delivered', 'Canceled']
         },
-        default: 'Booked'
+        default: 'Preparing'
     },
     active: {
         type: Boolean,
