@@ -15,9 +15,13 @@ const bagasiSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Bagasi ini berangkat lemana?'],
     },
-    waktuKeberangkatan: {// YYYY-MM-DD
+    waktuBerangkat: {// YYYY-MM-DD
         type: Date,
         required: [true, 'Isi waktu keberangkatan'],
+    },
+    waktuTiba: {// YYYY-MM-DD
+        type: Date,
+        required: [true, 'Isi waktu tiba'],
     },
     hargaRp: {
         type: Number,
@@ -60,7 +64,7 @@ const bagasiSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['Scheduled', 'Loading', 'Full', 'Departed', 'Arrived', 'Canceled']
+            values: ['Scheduled', 'Opened', 'Closed', 'Canceled']
         },
         default: 'Scheduled'
     },

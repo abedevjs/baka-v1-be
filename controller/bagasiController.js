@@ -85,7 +85,8 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     const bagasi = await Bagasi.create({
         dari: req.body.dari,
         tujuan: req.body.tujuan,
-        waktuKeberangkatan: req.body.waktuKeberangkatan,
+        waktuBerangkat: req.body.waktuBerangkat,
+        waktuTiba: req.body.waktuTiba,
         hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
         dokumen: updateDokumen, //naming dokumen using the uploaded original file name
@@ -130,7 +131,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
 
     //todo 6. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
-        tanggalKeberangkatan: req.body.tanggalKeberangkatan,
+        waktuBerangkat: req.body.waktuBerangkat,
+        waktuTiba: req.body.waktuTiba,
         hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
         dokumen: updateDokumen,

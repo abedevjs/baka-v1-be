@@ -23,7 +23,7 @@
 🔴 10. upload fitur dokumen utk createBagasi dan createOrder
 🔴 11. Implementasi kan FBOauth. Agar regisnya cukup lwt google dan fb saja
 🔴 12. Saat createBagasi atau createOrder, minta nomor wa nya jika telpon user empty
-🔴 13. modelBagasi tambahkan tanggal kedatangan
+🔴 13. modelBagasi tambahkan tanggal tiba
 🔴 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 🔴 15. buat waktuKedatangan di bagasiModel
 🔴 16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
@@ -49,6 +49,7 @@
         isinya ada listPesanan, negara tujuan, bujet, pembayaran, catatan. 
         Kemudian asetLokalBaka di negara tujuan belikan jastip tersebut memakai akun adminBaka/bakaLokal, 
         kemudian barang Jastip tersebut di titip dgn cara booking bagasi travaler di bakaApp
+    32. di bagasiModel dan orderModel buat field: adminFee hasil kalkulasi biaya2 dgn Tax
 
 
 setelah Oauth: strategy sementara:
@@ -81,10 +82,10 @@ BAGASI
 ✅ 9. createBagasi, user bisa menambahkan catatan khusus utk isi bagasinyas
 ✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 ✅ 10. upload fitur dokumen utk createBagasi dan createOrder
-13. modelBagasi tambahkan tanggal kedatangan
-28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
-15. buat waktuKedatangan di bagasiModel
-16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
+✅ 13. modelBagasi tambahkan tanggal tiba
+✅ 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
+✅ 15. buat waktuKedatangan di bagasiModel
+✅ 16. Update status di bagasi ('Scheduled', 'Opened', 'Closed', 'Canceled')
 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
 19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
 26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder.
@@ -102,7 +103,7 @@ ORDER
 ✅ 12. Saat createBagasi atau createOrder, minta nomor wa nya
 ✅ 10. upload fitur dokumen utk createBagasi dan createOrder
 ✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
-16. Update status di bagasi (scheduled, opened, closed, canceled) dan order (preparing, ready, delivered)
+✅ 16. Update status di bagasi ('Scheduled', 'Opened', 'Closed', 'Canceled')
 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
 20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
 21. Buat Collection: delayedOrder. Jadi saat user createOrder, order tsb hnya berstatus 'delayed' dan datanya masuk ke Collection delayedOrder. Selanjutnya,
