@@ -54,20 +54,20 @@ const orderSchema = new mongoose.Schema({
 });
 
 //! Document Middleware --start
-orderSchema.post('save', async function () {
+orderSchema.post('save', async function () {//* Referencing orderId and orderBagasiId to User.order and User.orderBagasiId
     const ownerId = this.owner._id;
-    const bagasiId = this.bagasi._id;
+    // const bagasiId = this.bagasi._id;
 
-    await Bagasi.findByIdAndUpdate(bagasiId, {
-        $inc: {
-            availableKg: -this.jumlahKg,
-            bookedKg: +this.jumlahKg,
-            balanceRp: +this.biayaRp
-        },
-        $push: {
-            order: this._id
-        }
-    });
+    // await Bagasi.findByIdAndUpdate(bagasiId, {//* Manipulating Bagasi data. Fn ini di pindah, di handle langsung oleh Admin
+    //     $inc: {
+    //         availableKg: -this.jumlahKg,
+    //         bookedKg: +this.jumlahKg,
+    //         balanceRp: +this.biayaRp
+    //     },
+    //     $push: {
+    //         order: this._id
+    //     }
+    // });
 
     await User.findByIdAndUpdate(ownerId, {
         $push: {
@@ -77,20 +77,22 @@ orderSchema.post('save', async function () {
     })
 });
 
-orderSchema.pre('updateOne', async function (next) { //* Ini untuk ketika sedang delete Order, availableKg, bookedKg dan balanceRp bagasinya ter update. Fn ini di called di orderController.deleteOrder()
-    const currentDocument = this._conditions;
+//* Ini untuk ketika sedang delete Order, availableKg, bookedKg dan balanceRp bagasinya ter update. Fn ini di called di orderController.deleteOrder()
+//* Reason this code is deleted: Operasional modifikasi bagasi ($inc) hanya dilakukan oleh Admin
+// orderSchema.pre('updateOne', async function (next) {
+//     const currentDocument = this._conditions;
 
-    const bagasiId = currentDocument.bagasi._id;
-    await Bagasi.findByIdAndUpdate(bagasiId, {
-        $inc: {
-            availableKg: +currentDocument.jumlahKg,
-            bookedKg: -currentDocument.jumlahKg,
-            balanceRp: -currentDocument.biayaRp
-        },
-    });
+//     const bagasiId = currentDocument.bagasi._id;
+//     await Bagasi.findByIdAndUpdate(bagasiId, {
+//         $inc: {
+//             availableKg: +currentDocument.jumlahKg,
+//             bookedKg: -currentDocument.jumlahKg,
+//             balanceRp: -currentDocument.biayaRp
+//         },
+//     });
 
-    next();
-});
+//     next();
+// });
 //! Document Middleware --end
 
 //! Query Middleware --start

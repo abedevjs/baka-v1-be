@@ -49,7 +49,11 @@
         isinya ada listPesanan, negara tujuan, bujet, pembayaran, catatan. 
         Kemudian asetLokalBaka di negara tujuan belikan jastip tersebut memakai akun adminBaka/bakaLokal, 
         kemudian barang Jastip tersebut di titip dgn cara booking bagasi travaler di bakaApp
-    32. di bagasiModel dan orderModel buat field: adminFee hasil kalkulasi biaya2 dgn Tax
+🔴 32. di bagasiModel dan orderModel buat field: adminFee hasil kalkulasi biaya2 dgn Tax
+🔴 33. auto status ke closed jika bagasi penuh. dan klo sudah closed atau availableKg = 0, bagasi tidak bisa di order
+34. Automatic delete/modify document against time or other variable
+35. Dalam kondisi apa Bagasi.status = Canceled. Dan ini apa efeknya ke User
+36. Dalam kondisi apa Order.status = 'Delivered' atau 'Canceled'. Dan ini apa efeknya ke User
 
 
 setelah Oauth: strategy sementara:
@@ -68,7 +72,8 @@ AUTHENTICATION
     -bagaimana cara kita tahu jika user ter logged in?. 🟢Answer: auth dan cookies di handle passport
 ✅ 3. Auth Controller path khusus Admin
 ✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
-
+✅ 32. di bagasiModel dan orderModel buat field: adminFee hasil kalkulasi biaya2 dgn Tax
+✅ 33. auto status ke closed jika bagasi penuh. dan klo sudah closed atau availableKg = 0, bagasi tidak bisa di order
 
 
 
@@ -86,35 +91,45 @@ BAGASI
 ✅ 28. Di bagasiModel dan updateBagasi tambahkan tanggalTiba
 ✅ 15. buat waktuKedatangan di bagasiModel
 ✅ 16. Update status di bagasi ('Scheduled', 'Opened', 'Closed', 'Canceled')
-17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
-19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
-26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder.
+✅ 17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
+✅ 19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
+🟥 26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder. 🟢Answer: Tidak perlu. Cukup routes khusus Admin
 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
 
 
 
+CARI SOLUSI
+❗ Jika createOrder dilakukan, maka ia akan calculate bagasi detail yg kemungkinan bisa saja nanti terudpdate oleh orderan lain yg sdh di verifikasi,
+jd pada saat user lain createOrder, ia bukan lihat misalnya availableKg = 60 tp sebenarnya sudah availableKg = 10, karena di createOrder sebelumnya,
+payment nya valid dan tetapi admin belum ada waktu verifikasi. jadi user ke 2 yg createOrder harus modifikasi order detail dan jumlah payment nya,
+paling parah jika user 2 sudah transfer. 🟢Answer: Hanya layani customer yg sudah bayar.
+
+STEP SOLUSI
+✅ bereskan dulu algoritma createBagasi, createOrder kemudian barulah updateBagasi dan updateOrder
 
 ORDER
-2. Kondisi boleh update order apa saja ialah:
+
+✅ 2. Kondisi boleh update order apa saja ialah:
     a. jika order belum dibayar/lunas. Jika sudah lunas, silahkan buat order baru.
     b. solusi updateOrder:
-    user hanya bisa order bagasi yang sama 3 kali. PENDING
+    c. user hanya bisa order bagasi yang sama 3 kali. 🟢Answer: Bagasi bisa di order multiple times oleh satu user asalkan lunas semua.
 ✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon?
 ✅ 12. Saat createBagasi atau createOrder, minta nomor wa nya
 ✅ 10. upload fitur dokumen utk createBagasi dan createOrder
 ✅ 14. createBagasi dan createOrder tambahkan field catatan (berarti tambahkan jg di model masing2)
 ✅ 16. Update status di bagasi ('Scheduled', 'Opened', 'Closed', 'Canceled')
-17. Bisa jg createBagasi dan createOrder admin yg kendalikan?
-20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
-21. Buat Collection: delayedOrder. Jadi saat user createOrder, order tsb hnya berstatus 'delayed' dan datanya masuk ke Collection delayedOrder. Selanjutnya,
+✅ 17. Bisa jg createBagasi dan createOrder admin yg kendalikan? 🟢Answer: routes khusus Admin
+✅ 21. Buat Collection: delayedOrder. Jadi saat user createOrder, order tsb hnya berstatus 'delayed' dan datanya masuk ke Collection delayedOrder. Selanjutnya,
     admin secara manual memeriksa bukti pembayaran. Jika sukses, admin eksekusi fn activateOrder yg datax diambil dr Collection delayedOrder yg manipulate db Bagasi, db Order, dan db User dan status order tersebut jadi 'Ready'.
-22. Jika status order sdh 'Ready', user tidak bisa membatalkan order nya. Kecuali, jika traveler nya tdk brkt.
-24. Order tdk bisa di edit/delete setelah status 'Ready'.
-25. Status Order: Preparing (jika masih tunggu cek status pembayaran) dan Ready (jika pembayaran valid).
-27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
+    🟢Answer: Tidak perlu. Ada routes khusus Admin.
+✅ 22. Jika status order sdh 'Ready', user tidak bisa membatalkan order nya. Kecuali, jika traveler nya tdk brkt.
+✅ 24. Order tdk bisa di edit/delete setelah status 'Ready'. 🟢Answer: 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
+✅ 25. Status Order: Preparing (jika masih tunggu cek status pembayaran) dan Ready (jika pembayaran valid).
+✅ 27. Untuk updateOrder, yang msh bisa di update hanya yg berstatus 'Preparing' (update) (msh dlm proses cek manual payment). 'Ready' (no update no delete), 'Delivered' (no update, bs delete)
 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
-30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
+✅ 30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
     Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
+✅ 31. deleteOrder moshkelah. 🟢Answer: Betul moshkelah karena pake updateOne yg activate document midware di Order Model yg modify increment Bagasi
 
 
 
@@ -127,6 +142,7 @@ USER
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
 ❗Don’t forget security Middleware
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table)
+❗20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
 
 const bagasi = await Bagasi.findOne(bagasiId)
 adminFeeRp: +((this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX),

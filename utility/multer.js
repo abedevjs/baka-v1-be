@@ -42,7 +42,7 @@ const multerUpload = multer({
     fileFilter: multerFilter,
     limits: {
         files: 1,
-        fileSize: 5300880,
+        fileSize: process.env.MULTER_MAX_UPLOAD,
     },
 });
 

@@ -59,15 +59,27 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     //todo 3. Cek owner bagasi tidak boleh order bagasi sendiri
     if (bagId.owner._id.toString() === req.user.id) return next(new AppError('Kakak tidak boleh membeli bagasi sendiri 😢', 403));
 
-    //todo 4. Cek user tdk punya lebih dari 5 aktif order di bagasi yang berbeda2.
-    if (req.user.order.length >= 5) return next(new AppError('Kakak hanya boleh memiliki 5 order aktif 😢', 403));
+    //todo 3. Cek Bagasi.status. Hanya boleh order jika status bagasi sudah di verifikasi Admin (status: 'Opened')
+    if(bagId.status != 'Opened') return next(new AppError('Bagasi ini masih dalam tahap verifikasi kak 😢', 403));
+
+    //todo 4. Cek user tdk punya lebih dari 10 aktif order di bagasi yang berbeda2.
+    if (req.user.order.length >= process.env.MAX_ORDER) return next(new AppError('Kakak hanya boleh memiliki 10 order aktif 😢', 403));
 
     //todo 5.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
-    if (req.user.orderBagasiId.includes(req.params.bagasiId)) return next(new AppError('Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃', 403));
+    //todo 5.User could create multiple Order on same Bagasi, if all these orders on the same Bagasi are paid (status: Ready) 
+    if (req.user.orderBagasiId.includes(req.params.bagasiId)) {
+        //* Cek Brp bnyak order di bagasi yg sama.
+        const count = req.user.orderBagasiId.map(el =>  el == req.params.bagasiId);
 
+        //* Check if all those orders are paid (status: Ready)
+        const check = req.user.order.filter(el => bagId.order.includes(el));
+
+        if(count.length != check.length) return next(new AppError('Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃', 403));
+    } 
+    
     //todo 6. Cek if bagasi is overloaded, request denied
     if (bagId.availableKg < req.body.jumlahKg) return next(new AppError('Bagasi yang Kakak pesan telah memenuhi kapasitas 😢, koreksi jumlah pesanan nya ya Kak', 401));
-
+    
     //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
     const user = await User.findById(req.user.id);
 
@@ -91,7 +103,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
 
     if(req.file) {
         updateDokumen = req.file.filename
-        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
+        if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
     };
 
     //todo 9. Jika semua kondisi diatas terpenuhi, create order
@@ -108,7 +120,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     if (!order) return next(new AppError('Kesalahan dalam membuat order', 400));
 
     res.status(201).json({
-        status: 'done',
+        status: 'Success',
+        message: 'Order berhasil dibuat. Selanjutnya Admin akan memeriksa bukti pembayaran',
         requestedAt: req.time,
         data: {
             order
@@ -129,14 +142,18 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     if (!currentBagasi) return next(new AppError('Bagasi yang kakak minta tidak tersedia 😢', 404))
 
     //todo 4. Check if User is owner
-    if (order.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemesan/pembeli bagasi ini 😢. Akses di tolak ya Kak', 401));
+    if (order.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemilik order ini 😢. Akses di tolak ya Kak', 401));
+    
+    //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing')
+    // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
+    if((order.status !== 'Preparing')) return next(new AppError('Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi 🙂', 401));
 
-    //todo 5. Cek if bagasi is overloaded, request denied
+    //todo 6. Cek if bagasi is overloaded, request denied
     // req.body.jumlahKg = 46, order.jumlahKg = 15. currentBagasi.initialKg = 60, currentBagasi.avail = 15, currentBagasi.bookedKg = 45
     // console.log(`😂, req.body.jumlahKg:${req.body.jumlahKg}, order.jumlahKg:${order.jumlahKg}, currentBagasi.initialKg:${currentBagasi.initialKg}, currentBagasi.availableKg:${currentBagasi.availableKg}, currentBagasi.bookedKg:${currentBagasi.bookedKg},`);
     if ((order.jumlahKg + req.body.jumlahKg) > currentBagasi.availableKg && req.body.jumlahKg > (order.jumlahKg + currentBagasi.availableKg)) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
 
-    //todo 5. Check if user update the upload file, make sure it's not exceed than 5mb
+    //todo 7. Check if user update the upload file, make sure it's not exceed than 5mb
     //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
     //* upload dokumen tetap wajib, tp di validate oleh mongoose.
 
@@ -149,50 +166,24 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
 
     //todo 6. Update Order
     const updatedOrder = await Order.findByIdAndUpdate(order, {
-        jumlahKg: req.body.jumlahKg,
-        isi: req.body.isi,
-        biayaRp: req.body.biayaRp,
-        dokumen: updateDokumen,
-        catatan: req.body.catatan,
+            jumlahKg: req.body.jumlahKg,
+            isi: req.body.isi,
+            biayaRp: req.body.biayaRp,
+            dokumen: updateDokumen,
+            catatan: req.body.catatan,
 
-    },
+        },
         {
             new: true,
             runValidators: true
         }
     );
 
-    //todo 6. Calculate total Jumlah dan balanceRp di Bagasi
-    const bagOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
-
-    let jumlah = [];
-    await Promise.all(bagOrderIds.map(async (el) => {
-        const val = (await Order.findById(el)).jumlahKg;
-        jumlah.push(val);
-
-    }));
-    const totalJumlah = jumlah.reduce((acc, el) => acc + el, 0)
-
-    let biaya = [];
-    await Promise.all(bagOrderIds.map(async (el) => {
-        const val = (await Order.findById(el)).biayaRp;
-        biaya.push(val);
-
-    }));
-    const totalBiaya = biaya.reduce((acc, el) => acc + el, 0);
-
-    //todo 7. Update Bagasi
-    const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi._id, {
-
-        availableKg: bagasi.initialKg - totalJumlah,
-        bookedKg: totalJumlah,
-        balanceRp: totalBiaya
-    });
-
-    if (!updatedOrder || !updatedBagasi) return next(new AppError('Kesalahan dalam memperbaharui order', 400));
+    if (!updatedOrder) return next(new AppError('Kesalahan dalam memperbaharui order', 400));
 
     res.status(200).json({
-        status: 'done',
+        status: 'Success',
+        message: 'Order berhasil di update',
         requestedAt: req.time,
         data: {
             updatedOrder
@@ -209,20 +200,25 @@ exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/6
     //todo 2. check if user is the owner
     if (order.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemesan/pembeli order ini 😢. Akses di tolak ya Kak', 401));
 
-    //todo 3. update jumlahKg bagasi di Bagasi dan hapus order dari Bagasi.order[id]
-    const bagasiId = order.bagasi._id;
-    const bagasi = await Bagasi.findById(bagasiId)
-    const bagasiOrder = await Bagasi.updateOne(bagasi, { //*hapus order dari Bagasi.order[id]
-        $pull: {
-            order: {
-                $in: [req.params.id]
-            }
-        }
-    });
+    //todo 3. Check Order.status. Hanya boleh delete jika order blm dibayar (status: 'Preparing')
+    // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
+    if((order.status !== 'Preparing')) return next(new AppError('Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan 🙂', 401));
+    
+    //todo 4. update jumlahKg bagasi di Bagasi dan hapus order dari Bagasi.order[id].
+    //* Reason this code is deleted: orderID yg masuk di Bagasi.order[arr] hanyalah Order yg sdh 'Ready', jika blm, orderID tsb tdk ada.
+    // const bagasiId = order.bagasi._id;
+    // const bagasi = await Bagasi.findById(bagasiId)
+    // const bagasiOrder = await Bagasi.updateOne(bagasi, { //*hapus order dari Bagasi.order[id]
+    //     $pull: {
+    //         order: {
+    //             $in: [req.params.id]
+    //         }
+    //     }
+    // });
 
     //todo 4 and 5. hapus order dari User.order[id] dan Hapus bagasiId dari User.orderBagasiId[id]
     const user = await User.findById(req.user.id);
-    const userOrder = await User.updateOne(user, {
+    const userOrder = await User.findByIdAndUpdate(user, {
         $pull: {
             order: {
                 $in: [req.params.id]
@@ -231,20 +227,28 @@ exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/6
                 $in: [order.bagasi._id]
             }
         }
+    }, {
+        new: true,
+        runValidators: true
     });
 
     //todo 6. Update Order dari Order collection ke active: false (liat Document Middleware di Order Model)
+    //* Bnyak line code dibwh krn wktu itu sy ingin cari pre document middleware yg available sesuai dgn method.
     // const deleteOrder = await Order.findByIdAndDelete(req.params.id);
     // const deleteOrder = await Order.findOneAndUpdate(req.params.id);
     // const deleteOrder = await Order.deleteOne({ _id: req.params.id });
-    // const deleteOrder = await Order.findByIdAndUpdate(req.params.id, { active: false });
-    const deleteOrder = await Order.updateOne(order, { active: false });
+    // const deleteOrder = await Order.updateOne(order, { active: false });//* Line ini dipake jika kita ingin aktifkan pre document middleware di Order Model
+    const deleteOrder = await Order.findByIdAndUpdate(req.params.id, { active: false }, {
+        new: true,
+        runValidators: true
+    });
 
-    if (!bagasiOrder || !userOrder || !deleteOrder) return next(new AppError('Kesalahan dalam menghapus order', 400));
+    if (!userOrder || !deleteOrder) return next(new AppError('Kesalahan dalam menghapus order', 400));
 
     res.status(200).json({
-        status: 'done',
-        data: null
+        status: 'Success',
+        message: 'Order berhasil di hapus',
+        active: deleteOrder.active
     });
 });
 

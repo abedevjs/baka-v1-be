@@ -7,6 +7,8 @@ const orderRoutes = require('./routes/orderRouter');
 const userRoutes = require('./routes/userRouter');
 // const oauthRouter = require('./routes/oauthRouter');
 const authRouter = require('./routes/authRouter');
+const adminRoutes = require('./routes/adminRouter');
+
 const AppError = require('./utility/appError');
 const globalErrorHandler = require('./controller/errorController');
 
@@ -90,6 +92,9 @@ app.use('/user', userRoutes);
 
 //* www.nama.com/auth
 app.use('/auth', authRouter);
+
+//* www.nama.com/admin
+app.use('/admin', adminRoutes);
 //! Router --end
 
 //! Undefined route handler

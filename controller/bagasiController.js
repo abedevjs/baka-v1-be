@@ -53,7 +53,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
     //todo 2. Preventing create more than 3 bagasi
-    if (req.user.bagasi.length >= 3) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
+    if (req.user.bagasi.length >= process.env.MAX_BAGASI) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
 
     //todo 3. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
     const user = await User.findById(req.user.id);
@@ -78,7 +78,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 
     if(req.file) {
         updateDokumen = req.file.filename
-        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
+        if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
     };
     
     //todo 5. If all those conditions above is fulfilled, create new Bagasi.
@@ -87,8 +87,8 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         tujuan: req.body.tujuan,
         waktuBerangkat: req.body.waktuBerangkat,
         waktuTiba: req.body.waktuTiba,
-        hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
+        hargaRp: req.body.hargaRp,
         dokumen: updateDokumen, //naming dokumen using the uploaded original file name
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id)
@@ -97,7 +97,8 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     if (!bagasi) return next(new AppError('Terjadi kesalahan dalam mendaftarkan bagasi Kakak 😢', 400))
 
     res.status(201).json({
-        status: 'done',
+        status: 'Success',
+        message: 'Bagasi berhasil dibuat. Selanjutnya, Admin akan memeriksa dokumen keberangkatan.',
         data: {
             bagasi
         }
@@ -115,8 +116,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     if (bagasi.owner._id.toString() !== req.user.id) return next(new AppError('Kakak bukan pemilik/penjual bagasi ini 😢. Akses di tolak ya Kak', 401));
 
     //todo 4. Check if ordered Bagasi is bigger than the new one, request denied.
-    // console.log('😃', req.body.availableKg <= 60);
-    if (bagasi.bookedKg > req.body.availableKg || (req.body.availableKg == 60 && bagasi.initialKg == 60) || ((bagasi.bookedKg + req.body.availableKg) - bagasi.bookedKg) > 60) return next(new AppError('Jumlah Bagasi yang dijual melebihi batas maksimal (60Kg) atau Bagasi yang telah dipesan lebih besar dari yang Kakak jual 😢. Jika mendesak, hubungi Admin.', 401));
+    // console.log('😃', (((bagasi.bookedKg + Number(req.body.availableKg)) - bagasi.bookedKg) > 60));
+    if ((bagasi.bookedKg > req.body.availableKg) || (req.body.availableKg == 60 && bagasi.initialKg == 60) || (((bagasi.bookedKg + Number(req.body.availableKg)) - bagasi.bookedKg) > 60)) return next(new AppError('Jumlah Bagasi yang dijual melebihi batas maksimal (60Kg) atau Bagasi yang telah dipesan lebih besar dari yang Kakak jual 😢. Jika mendesak, hubungi Admin.', 401));
     
     //todo 5. Check if user update the upload file, make sure it's not exceed than 5mb
     //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
@@ -176,22 +177,26 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
     // todo 3. Check if bagasi has been ordered, request denied
     if (id.bookedKg > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel ya Kak 😢. Hubungi Admin', 401));
 
-    //todo 4. Delete bagasiId from User.bagasi
+    //todo 4. Delete bagasiId from User.bagasi and Update the new document
     const user = await User.findById(req.user.id);
-    const userBagasi = await User.updateOne(user, {
+    const userBagasi = await User.findByIdAndUpdate(user, {
         $pull: {
             bagasi: {
                 $in: [req.params.id]
             }
         }
+    }, {
+        new: true,
+        runValidators: true
     });
 
-    //todo 4. Delete bagasi document from Bagasi collection
-    const bagasi = await Bagasi.findOneAndUpdate(id, { active: false });
-    if (!userBagasi || !bagasi) return next(new AppError('Terjadi kesalahan dalam menghapus bagasi Kakak 😢', 400));
+    //todo 4. Update Bagasi.status to 'false', and update the new document.
+    const bagasiActive = await Bagasi.findByIdAndUpdate(id, { active: false }, {new: true, runValidators: true});
+    if (!userBagasi || !bagasiActive) return next(new AppError('Terjadi kesalahan dalam menghapus bagasi Kakak 😢', 400));
 
     res.status(200).json({
-        status: 'done',
-        data: null
+        status: 'Success',
+        message: 'Bagasi berhasil dihapus',
+        bagasiActive: bagasiActive.active
     });
 });

@@ -12,8 +12,7 @@ const { findById } = require('../model/bagasiModel');
 exports.restrictTo = (...roles) => {
 
     return (req, res, next) => {
-        console.log(roles, req.user);
-        if (!roles.includes(req.user.role)) {
+        if (!roles.includes(req.user.email)) {
             return next(new AppError('Halaman ini khusus utk admin: Abe 😠', 403));
         };
 
@@ -282,7 +281,8 @@ exports.authFacebookHandler = passport.authenticate('facebook', { scope: ['publi
 //! auth Facebook dgn Passport -- end
 
 exports.authenticate = (req, res, next) => {
-    console.log(req.user);
+    // console.log(req.user);
+    // console.log(req.isAuthenticated());
     if(req.isAuthenticated()) return next();
     
     res.redirect('/');
