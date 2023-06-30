@@ -85,36 +85,51 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
     //todo 6. Calculate Kg and Rp di Bagasi.order.id (loop)
     const bagasiOrderIds = Object.values(currentBagasi.order).map(id => id);// '4f5sa', '87f5f'
 
-        //todo 1. Calculate total Bagasi.availableKg
-        let availableKgArray = [];
+        //todo 1. Calculate Kg in Bagasi.availableKg
+        let jumlahKgArray = [];
         await Promise.all(bagasiOrderIds.map(async (el) => {
             const value = (await Order.findById(el)).jumlahKg;
-            availableKgArray.push(value);
+            jumlahKgArray.push(value);
         }));
-        const totalAvailableKg = availableKgArray.reduce((acc, el) => acc + el, 0)
-        
+        const totalJumlahKg = jumlahKgArray.reduce((acc, el) => acc + el, 0)
 
-        //todo 2. Calculate total Bagasi.balanceRp
-        let balanceRpArray = [];
+        //todo 2. Calculate Rp in Bagasi.balanceRp
+        let biayaRpArray = [];
         await Promise.all(bagasiOrderIds.map(async (el) => {
             const value = (await Order.findById(el)).biayaRp;
-            balanceRpArray.push(value);
+            biayaRpArray.push(value);
         }));
-        const totalBalanceRp = balanceRpArray.reduce((acc, el) => acc + el, 0);
+        const totalBiayaRp = biayaRpArray.reduce((acc, el) => acc + el, 0)
 
-    //todo 7. Update the newly calculate/result to Bagasi
-    const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasiID, {
-        availableKg: currentBagasi.initialKg - totalAvailableKg,
-        bookedKg: totalAvailableKg,
-        balanceRp: totalBalanceRp,
-        // status: updatedBagasi.availableKg == 0 ? 'Closed' : 'Opened',
+    //todo 7. Update the newly Kg to Bagasi
+    const updatedKgBagasi = await Bagasi.findByIdAndUpdate(bagasiID, {
+        availableKg: currentBagasi.initialKg - totalJumlahKg,
+        bookedKg: totalJumlahKg,
+        balanceRp: totalBiayaRp,
     }, {
         new: true,
         runValidators: true
     });
 
-    //todo 8. Check and Update updatedBagasi.active to Bagasi
-    if(updatedBagasi.availableKg == 0) {
+    //todo 8. Calculate Rp in Bagasi.adminFeeRp (balanceRp * tax)
+    const totalAdminFeeRp = updatedKgBagasi.balanceRp * process.env.BAGASI_TAX;
+
+    //todo 9. Calculate Rp in Bagasi.netRp (totalBalanceRp - totalAdminFeeRp)
+    const totalNetRp = updatedKgBagasi.balanceRp - totalAdminFeeRp;
+
+    // console.log(`🫠, totalBalanceRp: ${updatedKgBagasi.balanceRp}, totalAdminFeeRp: ${totalAdminFeeRp}, totalNetRp: ${totalNetRp}`);
+
+    //todo 10. Update the newly Rp to Bagasi
+    const updatedRpBagasi = await Bagasi.findByIdAndUpdate(bagasiID, {
+        adminFeeRp: totalAdminFeeRp,
+        netRp: totalNetRp
+    }, {
+        new: true,
+        runValidators: true
+    });
+
+    //todo 12. Check and Update updatedKgBagasi.active to Bagasi
+    if(updatedKgBagasi.availableKg == 0) {
         const updateBagasiStatus = await Bagasi.findByIdAndUpdate(bagasiID, { status: 'Closed' }, {
             new: true,
             runValidators: true
@@ -132,13 +147,12 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
             runValidators: true
         }
     )
-    if (!updatedBagasi || !updateOrderStatus ) return next(new AppError('Update Bagasi tidak berhasil pak Admin! 😢', 404));
+    if (!updatedKgBagasi || !updatedRpBagasi || !updateOrderStatus ) return next(new AppError('Update Bagasi tidak berhasil pak Admin! 😢', 404));
     
     res.status(200).json({
         status: 'Success',
         message: 'Pembayaran valid. Order berhasil di aktifkan',
-        updatedBagasi: updatedBagasi.availableKg,
-        updateOrderStatus: updateOrderStatus.status,
+        updatedAvailableKgBagasi: updatedKgBagasi.availableKg,
         updateOrderStatus: updateOrderStatus.status
     });
 });

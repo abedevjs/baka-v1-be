@@ -50,6 +50,10 @@ const bagasiSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    netRp: {
+        type: Number,
+        default: 0
+    },
     pesawat: {
         type: String,
         default: 'Maskapai akan di update manual oleh Admin'

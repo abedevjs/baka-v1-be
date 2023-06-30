@@ -27,6 +27,10 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    netRp: {
+        type: Number,
+        default: 0
+    },
     dokumen: {//Upload bukti pembayaran
         type: String,
         default: 'Upload document akan di cek manual oleh Admin',

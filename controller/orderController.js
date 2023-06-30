@@ -106,11 +106,19 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
         if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
     };
 
-    //todo 9. Jika semua kondisi diatas terpenuhi, create order
+    //todo 9. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
+    const totalBiayaRp = Number(req.body.jumlahKg) * bagId.hargaRp;
+    const totalAdminFeeRp = totalBiayaRp * process.env.ORDER_TAX;
+    const totalNetRp = totalBiayaRp + totalAdminFeeRp;
+    // console.log(`🫠, totalBiayaRp: ${totalBiayaRp}, totalAdminFeeRp: ${totalAdminFeeRp}, totalNetRp: ${totalNetRp}`);
+
+    //todo 10. Jika semua kondisi diatas terpenuhi, create order
     const order = await Order.create({
         jumlahKg: req.body.jumlahKg,
         isi: req.body.isi,
-        biayaRp: req.body.biayaRp,
+        biayaRp: totalBiayaRp,
+        adminFeeRp: totalAdminFeeRp,
+        netRp: totalNetRp,
         dokumen: updateDokumen, //naming dokumen using the uploaded original file name
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id), //* Embedding
@@ -149,10 +157,12 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     if((order.status !== 'Preparing')) return next(new AppError('Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi 🙂', 401));
 
     //todo 6. Cek if bagasi is overloaded, request denied
-    // req.body.jumlahKg = 46, order.jumlahKg = 15. currentBagasi.initialKg = 60, currentBagasi.avail = 15, currentBagasi.bookedKg = 45
-    // console.log(`😂, req.body.jumlahKg:${req.body.jumlahKg}, order.jumlahKg:${order.jumlahKg}, currentBagasi.initialKg:${currentBagasi.initialKg}, currentBagasi.availableKg:${currentBagasi.availableKg}, currentBagasi.bookedKg:${currentBagasi.bookedKg},`);
-    if ((order.jumlahKg + req.body.jumlahKg) > currentBagasi.availableKg && req.body.jumlahKg > (order.jumlahKg + currentBagasi.availableKg)) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
-
+    // console.log(((order.jumlahKg + Number(req.body.jumlahKg)) > currentBagasi.availableKg));//* Jika (oldOrderKg + newOrderKg) > Bagasi.availableKg
+    // console.log((Number(req.body.jumlahKg) > (order.jumlahKg + currentBagasi.availableKg)));//* Jika newOrderKg > (oldOrderKg + Bagasi.availableKg)
+    // console.log(Number(req.body.jumlahKg) > currentBagasi.availableKg);
+    if (Number(req.body.jumlahKg) > currentBagasi.availableKg) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
+    // if (((order.jumlahKg + Number(req.body.jumlahKg)) > currentBagasi.availableKg) && (Number(req.body.jumlahKg) > (order.jumlahKg + currentBagasi.availableKg))) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
+    
     //todo 7. Check if user update the upload file, make sure it's not exceed than 5mb
     //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
     //* upload dokumen tetap wajib, tp di validate oleh mongoose.
@@ -164,11 +174,19 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
         if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
     }
 
-    //todo 6. Update Order
+    //todo 8. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
+    const totalBiayaRp = Number(req.body.jumlahKg) * currentBagasi.hargaRp;
+    const totalAdminFeeRp = totalBiayaRp * process.env.ORDER_TAX;
+    const totalNetRp = totalBiayaRp + totalAdminFeeRp;
+    // console.log(`🫠, totalBiayaRp: ${totalBiayaRp}, totalAdminFeeRp: ${totalAdminFeeRp}, totalNetRp: ${totalNetRp}`);
+    
+    //todo 9. Update Order
     const updatedOrder = await Order.findByIdAndUpdate(order, {
             jumlahKg: req.body.jumlahKg,
             isi: req.body.isi,
-            biayaRp: req.body.biayaRp,
+            biayaRp: totalBiayaRp,
+            adminFeeRp: totalAdminFeeRp,
+            netRp: totalNetRp,
             dokumen: updateDokumen,
             catatan: req.body.catatan,
 
