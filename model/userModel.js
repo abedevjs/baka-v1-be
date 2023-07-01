@@ -43,6 +43,7 @@ const userSchema = new mongoose.Schema({
         },
         select: false //biar ga show up in any output
     },
+    dokumen: Array,
     bagasi: [ //* Child Referencing. One to Few 
         {
             type: mongoose.Schema.ObjectId,

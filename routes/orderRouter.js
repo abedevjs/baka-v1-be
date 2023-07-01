@@ -1,6 +1,7 @@
 const express = require('express');
 const orderController = require('../controller/orderController');
-const authController = require('./../controller/authController')
+const authController = require('./../controller/authController');
+const uploadRoutes = require('./uploadRouter');
 
 const orderRouter = express.Router({ mergeParams: true });
 
@@ -18,5 +19,7 @@ orderRouter.route('/:id')
     .patch(authController.protect, orderController.uploadMiddleware, orderController.updateOrder)
     .delete(authController.protect, orderController.deleteOrder)
 
+//* www.nama.com/order/:orderId/upload
+// orderRouter.use('/:orderId?/upload', uploadRoutes);
 
 module.exports = orderRouter;

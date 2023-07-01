@@ -13,7 +13,7 @@ const bagasiSchema = new mongoose.Schema({
     },
     tujuan: {
         type: String,
-        required: [true, 'Bagasi ini berangkat lemana?'],
+        required: [true, 'Bagasi ini berangkat kemana?'],
     },
     waktuBerangkat: {// YYYY-MM-DD
         type: Date,
@@ -61,8 +61,8 @@ const bagasiSchema = new mongoose.Schema({
     },
     dokumen: {//Upload bukti keberangkatan
         type: String,
-        default: 'Upload document akan di cek manual oleh Admin',
-        required: [true, 'Mohon upload tiket keberangkatan Kak']
+        default: '',
+        // required: [true, 'Mohon upload tiket keberangkatan Kak']
         // select: false
     },
     catatan: {

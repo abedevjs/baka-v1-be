@@ -8,6 +8,7 @@ const userRoutes = require('./routes/userRouter');
 // const oauthRouter = require('./routes/oauthRouter');
 const authRouter = require('./routes/authRouter');
 const adminRoutes = require('./routes/adminRouter');
+const uploadRoutes = require('./routes/uploadRouter');
 
 const AppError = require('./utility/appError');
 const globalErrorHandler = require('./controller/errorController');
@@ -92,6 +93,9 @@ app.use('/user', userRoutes);
 
 //* www.nama.com/auth
 app.use('/auth', authRouter);
+
+//* www.nama.com/upload
+app.use('/upload', uploadRoutes);
 
 //* www.nama.com/admin
 app.use('/admin', adminRoutes);

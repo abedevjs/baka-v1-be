@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
     image: {
         type: String
     },
+    dokumen: Array,
     bagasi: [ //* Child Referencing. One to Few 
         {
             type: mongoose.Schema.ObjectId,

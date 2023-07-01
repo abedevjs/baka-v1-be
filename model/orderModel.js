@@ -33,8 +33,8 @@ const orderSchema = new mongoose.Schema({
     },
     dokumen: {//Upload bukti pembayaran
         type: String,
-        default: 'Upload document akan di cek manual oleh Admin',
-        required: [true, 'Mohon upload bukti pembayaran Kak 🥲']
+        default: '',
+        // required: [true, 'Mohon upload bukti pembayaran Kak 🥲']
         // select: false
     },
     catatan: {

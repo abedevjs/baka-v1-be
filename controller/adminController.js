@@ -24,6 +24,7 @@ const AppError = require('./../utility/appError');
 // }
 
 exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
+    
     //todo 1. Check Bagasi
     const bagasiID = await Bagasi.findById(req.params.id);
     if (!bagasiID) return next(new AppError('Bagasi yang Admin minta tidak tersedia 😢', 404));
@@ -34,9 +35,42 @@ exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
     }, {
         new: true,
         runValidators: true
-    })
+    });
+    if(!updateBagasi) return next(new AppError('Update status bagasi gagal', 400));
 
-    if(!updateBagasi) return next(new AppError('Update status bagasi gagal', 400))
+    //todo 3. Jika Bagasi tdk ada dokumen. Memindahkan secara manual nama dokumen dari User.dokumen ke Bagasi.dokumen dengan cara copy paste nama dokumen ke req.body.dokumen
+    const ownerID = bagasiID.owner._id;
+    const currentOwner = await User.findById(ownerID);
+    const mergedArr = currentOwner.bagasi.concat(currentOwner.order);
+
+    //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty.
+    if(!bagasiID.dokumen && !(!mergedArr)) {
+        
+        //* Cek jika nama dokumen berbeda / Admin salah copas
+        if(req.body.dokumen != currentOwner.dokumen) return next(new AppError('Nama dokumennya beda! req.body.dokumen != currentOwner.dokumen', 401));
+
+        //* Renaming Bagasi.dokumen dari req.body.dokumen (Admin yang isi manual)
+        const updateBagasiDokumen = await Bagasi.findByIdAndUpdate(bagasiID, {
+            dokumen: req.body.dokumen,
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if(!updateBagasiDokumen) return next(new AppError('Kesalahan dalam mengupdate Bagasi.dokumen 😀', 401));
+
+        //* Delete nama dokumen dari User.dokumen array
+        const updateUserDokumen = await User.findByIdAndUpdate(ownerID, {
+            $pull: {
+                dokumen: {
+                    $in: [req.body.dokumen]
+                }
+            }
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if(!updateUserDokumen) return next(new AppError('Kesalahan dalam menghapus User.dokumen array 😢', 401));
+    };
 
     res.status(200).json({
         status: 'Success',
@@ -136,7 +170,41 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
         });
 
         if(!updateBagasiStatus) return next(new AppError('Kesalahan dalam mengupdate status Bagasi', 500))
-    }
+    };
+
+    //todo 3. Jika Bagasi tdk ada dokumen. Memindahkan secara manual nama dokumen dari User.dokumen ke Bagasi.dokumen dengan cara copy paste nama dokumen ke req.body.dokumen
+    const ownerID = order.owner._id;
+    const currentOwner = await User.findById(ownerID);
+    const mergedArr = currentOwner.bagasi.concat(currentOwner.order);
+
+    //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty.
+    if(!order.dokumen && !(!mergedArr)) {
+        
+        //* Cek jika nama dokumen berbeda / Admin salah copas
+        if(req.body.dokumen != currentOwner.dokumen) return next(new AppError('Nama dokumennya beda! req.body.dokumen != currentOwner.dokumen', 401));
+
+        //* Renaming Bagasi.dokumen dari req.body.dokumen (Admin yang isi manual)
+        const updateOrderDokumen = await Order.findByIdAndUpdate(order, {
+            dokumen: req.body.dokumen,
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if(!updateOrderDokumen) return next(new AppError('Kesalahan dalam mengupdate Bagasi.dokumen 😀', 401));
+
+        //* Delete nama dokumen dari User.dokumen array
+        const updateUserDokumen = await User.findByIdAndUpdate(ownerID, {
+            $pull: {
+                dokumen: {
+                    $in: [req.body.dokumen]
+                }
+            }
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if(!updateUserDokumen) return next(new AppError('Kesalahan dalam menghapus User.dokumen array 😢', 401));
+    };
     
     //todo 9. Update Order.status
     const updateOrderStatus = await Order.findByIdAndUpdate(order, {

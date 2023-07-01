@@ -54,6 +54,8 @@
 🔴 34. Automatic delete/modify document against time or other variable
 🔴 35. Dalam kondisi apa Bagasi.status = Canceled. Dan ini apa efeknya ke User
 🔴 36. Dalam kondisi apa Order.status = 'Delivered' atau 'Canceled'. Dan ini apa efeknya ke User
+🔴 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
+    barulah kita minta upload dokumen penerbangan / bukti payment
 
 
 setelah Oauth: strategy sementara:
@@ -74,8 +76,6 @@ AUTHENTICATION
 ✅ 7. Waktu user daftar tidak perlu minta telpon, tapi ketika order atau jual bagasi minta telpon, atau ketika update user profile.
 ✅ 32. di bagasiModel dan orderModel buat field: adminFee hasil kalkulasi biaya2 dgn Tax
 ✅ 33. auto status ke closed jika bagasi penuh. dan klo sudah closed atau availableKg = 0, bagasi tidak bisa di order
-34. Automatic delete/modify document against time or other variable
-
 
 
 BAGASI
@@ -97,6 +97,8 @@ BAGASI
 🟥 26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder. 🟢Answer: Tidak perlu. Cukup routes khusus Admin
 ✅ 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
 35. Dalam kondisi apa Bagasi.status = Canceled. Dan ini apa efeknya ke User
+✅ 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
+    barulah kita minta upload dokumen penerbangan / bukti payment
 
 
 
@@ -133,6 +135,8 @@ ORDER
     Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
 ✅ 31. deleteOrder moshkelah. 🟢Answer: Betul moshkelah karena pake updateOne yg activate document midware di Order Model yg modify increment Bagasi
 36. Dalam kondisi apa Order.status = 'Delivered' atau 'Canceled'. Dan ini apa efeknya ke User
+✅ 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
+    barulah kita minta upload dokumen penerbangan / bukti payment
 
 
 
@@ -145,6 +149,7 @@ USER
 ❗Don’t forget security Middleware
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 ❗20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
+❗34. Automatic delete/modify document against time or other variable
 
 const bagasi = await Bagasi.findOne(bagasiId)
 adminFeeRp: +((this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX),

@@ -2,10 +2,6 @@ const Bagasi = require('./../model/bagasiModel');
 const User = require('./../model/userModel')
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
-const multerUpload = require('../utility/multer');
-
-
-exports.uploadMiddleware = multerUpload.single('dokumen'); 
 
 exports.getAllBagasi = catchAsync(async (req, res, next) => {
     let query = Bagasi.find();
@@ -50,7 +46,6 @@ exports.getOneBagasi = catchAsync(async (req, res, next) => {
 });
 
 exports.createBagasi = catchAsync(async (req, res, next) => {
-    //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
     //todo 2. Preventing create more than 3 bagasi
     if (req.user.bagasi.length >= process.env.MAX_BAGASI) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
@@ -69,17 +64,6 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         if(!addTelponToUser.telpon) return next(new AppError('Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢', 400));
         if(!addTelponToUser) return next(new AppError('Kesalahan dalam menambahkan nomor telpon Kakak 😢', 400));  
     };
-
-    //todo 4. Check if the upload file not exceed than 5mb
-    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
-    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
-
-    let updateDokumen = req.body.dokumen; 
-
-    if(req.file) {
-        updateDokumen = req.file.filename
-        if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
-    };
     
     //todo 5. If all those conditions above is fulfilled, create new Bagasi.
     const bagasi = await Bagasi.create({
@@ -89,7 +73,6 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         waktuTiba: req.body.waktuTiba,
         availableKg: req.body.availableKg,
         hargaRp: req.body.hargaRp,
-        dokumen: updateDokumen, //naming dokumen using the uploaded original file name
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id)
     });
@@ -98,7 +81,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 
     res.status(201).json({
         status: 'Success',
-        message: 'Bagasi berhasil dibuat. Selanjutnya, Admin akan memeriksa dokumen keberangkatan.',
+        message: 'Bagasi berhasil dibuat. Selanjutnya, User upload dokumen keberangkatan.',
         data: {
             bagasi
         }
@@ -106,7 +89,6 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 })
 
 exports.updateBagasi = catchAsync(async (req, res, next) => {
-    //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
     //todo 2. Check Bagasi
     const bagasi = await Bagasi.findById(req.params.id);
@@ -118,25 +100,13 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     //todo 4. Check if ordered Bagasi is bigger than the new one, request denied.
     // console.log('😃', (((bagasi.bookedKg + Number(req.body.availableKg)) - bagasi.bookedKg) > 60));
     if ((bagasi.bookedKg > req.body.availableKg) || (req.body.availableKg == 60 && bagasi.initialKg == 60) || (((bagasi.bookedKg + Number(req.body.availableKg)) - bagasi.bookedKg) > 60)) return next(new AppError('Jumlah Bagasi yang dijual melebihi batas maksimal (60Kg) atau Bagasi yang telah dipesan lebih besar dari yang Kakak jual 😢. Jika mendesak, hubungi Admin.', 401));
-    
-    //todo 5. Check if user update the upload file, make sure it's not exceed than 5mb
-    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
-    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
-
-    let updateDokumen = req.body.dokumen; 
-
-    if(req.file) {
-        updateDokumen = req.file.filename
-        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
-    }
 
     //todo 6. If all conditions above are fulfilled, update Bagasi
     const updatedBagasi = await Bagasi.findByIdAndUpdate(bagasi, {
         waktuBerangkat: req.body.waktuBerangkat,
         waktuTiba: req.body.waktuTiba,
-        hargaRp: req.body.hargaRp,
         availableKg: req.body.availableKg,
-        dokumen: updateDokumen,
+        hargaRp: req.body.hargaRp,
         catatan: req.body.catatan,
     }, {
         new: true,
@@ -158,7 +128,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     if (!updatedBagasi || !updateIncrement) return next(new AppError('Terjadi kesalahan dalam proses update bagasi Kakak 😢', 400));
 
     res.status(200).json({
-        status: 'done',
+        status: 'Success',
+        message: 'Bagasi berhasil di update. Selanjutnya, User upload dokumen keberangkatan.',
         data: {
             updatedBagasi
         }

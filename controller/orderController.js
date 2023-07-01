@@ -50,7 +50,6 @@ exports.getOneOrder = catchAsync(async (req, res, next) => {
 });
 
 exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bagasi/:bagasiId/order
-    //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
     //todo 2. Cek if the bagasi still exists
     const bagId = await Bagasi.findById(req.params.bagasiId);
@@ -95,17 +94,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
         if(!addTelponToUser) return next(new AppError('Kesalahan dalam menambahkan nomor telpon Kakak 😢', 400));  
     };
 
-    //todo 8. Check if the upload file not exceed than 5mb
-    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
-    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
-
-    let updateDokumen = req.body.dokumen; 
-
-    if(req.file) {
-        updateDokumen = req.file.filename
-        if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
-    };
-
     //todo 9. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
     const totalBiayaRp = Number(req.body.jumlahKg) * bagId.hargaRp;
     const totalAdminFeeRp = totalBiayaRp * process.env.ORDER_TAX;
@@ -119,7 +107,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
         biayaRp: totalBiayaRp,
         adminFeeRp: totalAdminFeeRp,
         netRp: totalNetRp,
-        dokumen: updateDokumen, //naming dokumen using the uploaded original file name
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id), //* Embedding
         bagasi: await Bagasi.findById(bagId), //* Embedding
@@ -129,7 +116,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
 
     res.status(201).json({
         status: 'Success',
-        message: 'Order berhasil dibuat. Selanjutnya Admin akan memeriksa bukti pembayaran',
+        message: 'Order berhasil dibuat. User mohon upload bukti pembayaran',
         requestedAt: req.time,
         data: {
             order
@@ -138,7 +125,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
 });
 
 exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/634a9ae426fc2de08774ae4a
-    //todo 1. Upload file sudah di handle oleh midware multer di utility file
 
     //todo 2. Check if Order is exist
     const order = await Order.findById(req.params.id);
@@ -163,17 +149,6 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
     if (Number(req.body.jumlahKg) > currentBagasi.availableKg) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
     // if (((order.jumlahKg + Number(req.body.jumlahKg)) > currentBagasi.availableKg) && (Number(req.body.jumlahKg) > (order.jumlahKg + currentBagasi.availableKg))) return next(new AppError('Bagasi yang Kakak pesan telah melebih kapasitas 😢, koreksi lagi jumlah pesanan nya ya Kak', 401))
     
-    //todo 7. Check if user update the upload file, make sure it's not exceed than 5mb
-    //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
-    //* upload dokumen tetap wajib, tp di validate oleh mongoose.
-
-    let updateDokumen = req.body.dokumen; 
-
-    if(req.file) {
-        updateDokumen = req.file.filename
-        if(req.file.size > 5300880) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
-    }
-
     //todo 8. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
     const totalBiayaRp = Number(req.body.jumlahKg) * currentBagasi.hargaRp;
     const totalAdminFeeRp = totalBiayaRp * process.env.ORDER_TAX;
@@ -187,7 +162,6 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
             biayaRp: totalBiayaRp,
             adminFeeRp: totalAdminFeeRp,
             netRp: totalNetRp,
-            dokumen: updateDokumen,
             catatan: req.body.catatan,
 
         },
@@ -201,7 +175,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {//* {{URL}}/order/63
 
     res.status(200).json({
         status: 'Success',
-        message: 'Order berhasil di update',
+        message: 'Order berhasil di update. User mohon upload bukti pembayaran',
         requestedAt: req.time,
         data: {
             updatedOrder
