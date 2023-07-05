@@ -68,7 +68,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
     //todo 5.User could create multiple Order on same Bagasi, if all these orders on the same Bagasi are paid (status: Ready) 
     if (req.user.orderBagasiId.includes(req.params.bagasiId)) {
         //* Cek Brp bnyak order di bagasi yg sama.
-        const count = req.user.orderBagasiId.map(el =>  el == req.params.bagasiId);
+        const count = req.user.orderBagasiId.filter(el =>  el == req.params.bagasiId);
 
         //* Check if all those orders are paid (status: Ready)
         const check = req.user.order.filter(el => bagId.order.includes(el));
@@ -109,7 +109,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {//* www.nama.com/bag
         netRp: totalNetRp,
         catatan: req.body.catatan,
         owner: await User.findById(req.user.id), //* Embedding
-        bagasi: await Bagasi.findById(bagId), //* Embedding
+        bagasi: {_id: req.params.bagasiId}, //* Referencing
+        // bagasi: await Bagasi.findById(bagId), //* Embedding
     });
 
     if (!order) return next(new AppError('Kesalahan dalam membuat order', 400));
@@ -208,14 +209,17 @@ exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/6
     //     }
     // });
 
-    //todo 4 and 5. hapus order dari User.order[id] dan Hapus bagasiId dari User.orderBagasiId[id]
+    //todo 4. Check how many IDs of same bagasi on user.orderBagasiId, if has more than one, delete it, and add it back to user.orderBagasiId (step 6)
     const user = await User.findById(req.user.id);
+    const sameIDs = user.orderBagasiId.filter(el => el == order.bagasi._id);
+
+    //todo 5. hapus order dari User.order[id] dan Hapus bagasiId dari User.orderBagasiId[id]
     const userOrder = await User.findByIdAndUpdate(user, {
         $pull: {
             order: {
                 $in: [req.params.id]
             },
-            orderBagasiId: {
+            orderBagasiId: {//* Disini mongodb delete semua id yg sm :(
                 $in: [order.bagasi._id]
             }
         }
@@ -224,7 +228,23 @@ exports.deleteOrder = catchAsync(async (req, res, next) => { //* {{URL}}/order/6
         runValidators: true
     });
 
-    //todo 6. Update Order dari Order collection ke active: false (liat Document Middleware di Order Model)
+    //todo 6. add it back. Ini semua dilakukan karena mongodb blm ada cara utk hnya mendelete 1 element dlm array
+    if(sameIDs.length > 1) {
+        sameIDs.pop();
+        const id = [...sameIDs];
+        
+        const sameIDsBack = await User.findByIdAndUpdate(user, {
+            $push: {
+                orderBagasiId: { $each: [...id] } //* This is how we push multiple elements to an array in mongodb
+            }
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if(!sameIDsBack) return next(new AppError('Add sameIDs back is error', 401));
+    };
+
+    //todo 7. Update Order dari Order collection ke active: false (liat Document Middleware di Order Model)
     //* Bnyak line code dibwh krn wktu itu sy ingin cari pre document middleware yg available sesuai dgn method.
     // const deleteOrder = await Order.findByIdAndDelete(req.params.id);
     // const deleteOrder = await Order.findOneAndUpdate(req.params.id);

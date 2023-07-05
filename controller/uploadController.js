@@ -9,6 +9,7 @@ const multerUpload = require('../utility/multer');
 exports.uploadMiddleware = multerUpload.single('dokumen'); 
 
 exports.updateUploadDokumen = catchAsync(async(req, res, next) => { //* www.nama.com/upload/:id?
+
     //todo Check if the upload file not exceed than 5mb
     //* Sengaja di buatkan variable baru karena ada uploadMidware yg memblok proses jika user tdk upload dokumen,
     //* upload dokumen tetap wajib, tp di validate oleh mongoose.
@@ -16,13 +17,15 @@ exports.updateUploadDokumen = catchAsync(async(req, res, next) => { //* www.nama
     if(req.file) {
         updateDokumen = req.file.filename
         if(req.file.size > process.env.MULTER_MAX_UPLOAD) return next(new AppError('Ukuran maksimal dokumen yang di upload hanya sampai 5mb saja Kakak 😢', 403));
-    };
+    
+    } else return next(new AppError('Tidak ada file yang di upload Kak 😢', 401));
+    
 
     //todo 1. Grab UserID
     const currentUser = await User.findById(req.user.id);
 
     //todo 2. Cek User.bagasi dan User.order
-    if((!currentUser.bagasi) && (!currentUser.order)) return next(new AppError('User belum buat Bagasi atau Order. Upload Dokumen tidak diterima', 403));
+    if(currentUser.bagasi.length == 0 && currentUser.order.length == 0) return next(new AppError('User belum buat Bagasi atau Order. Upload Dokumen tidak diterima', 403));
 
     //! WITHOUT req.params.id
     if(!req.params.id) {

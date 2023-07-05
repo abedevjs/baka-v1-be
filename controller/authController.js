@@ -5,7 +5,7 @@ const User = require('./../model/userModel');
 const UserAuth = require('../model/userAuthModel');
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
-const sendEmail = require('./../utility/email');
+const sendEmail = require('../utility/nodemailer');
 const { token } = require('morgan');
 const { findById } = require('../model/bagasiModel');
 
@@ -191,7 +191,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 //! --------------------IMPLEMENTASI AUTH DGN GOOGLE DAN FACEBOOK --start -------------- //
 
-const service = require('../utility/service');
+const axios = require('../utility/axios');
 const passport = require('passport');
 
 //! Oauth Google tanpa Passport -- start
@@ -206,7 +206,7 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
     const code = req.query.code;
 
     //todo 3. Get the id_token and access token with the code using Axios
-    const data = await service.getGoogleOauthTokens(code)
+    const data = await axios.getGoogleOauthTokens(code)
     const { id_token, access_token, expires_in, refresh_token, scope, token_type } = data;
     // console.log('🥰' `😁id_token: ${id_token}, 😆access_token: ${access_token}, 😆expires_in: ${expires_in}, 😆refresh_token: ${refresh_token},`);
 
@@ -215,7 +215,7 @@ exports.googleOauthHandler = catchAsync(async (req, res, next) => {//* This fn h
     // const googleUser = jwt.decode(id_token);
 
     //* Cara 2, melalui Google API
-    const googleUser = await service.getGoogleUser(id_token, access_token);
+    const googleUser = await axios.getGoogleUser(id_token, access_token);
 
     //todo 5. Upsert(update) the User in the database
     //* Klo ini pake cara 1

@@ -56,6 +56,11 @@
 🔴 36. Dalam kondisi apa Order.status = 'Delivered' atau 'Canceled'. Dan ini apa efeknya ke User
 🔴 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
     barulah kita minta upload dokumen penerbangan / bukti payment
+🔴 38. Node-scheduled Mengubah Model.status = Closed dan Canceled Delivered dan Canceled ke Model.active = false
+🔴 39. Perhatikan, saat User updateBagasi.waktuBerangkat/waktuTiba, Order.bagasi.waktuBerangkat dan atau Order.waktuTiba tidak terupdated!
+    Ini harus di fix karena mempengaruhi Node-scheduled
+🔴 40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
+
 
 
 setelah Oauth: strategy sementara:
@@ -96,9 +101,14 @@ BAGASI
 ✅ 19. Pada saat createBagasi success, status otomatis akan 'scheduled'. admin periksa bukti tiket. jika valid, di db admin secara manual ganti status ke 'opened'. Jika tidak valid, akan terhapus otomatis setelah sekian jam/admin hapus manual di db?
 🟥 26. Buat Collection: delayedBagasi. Fungsinya sama seperti delayedOrder. 🟢Answer: Tidak perlu. Cukup routes khusus Admin
 ✅ 29. Di bagasiModel dan orderModel tambahkan Tax. bagasi (5% atau 0.05), order (3% atau 0.03).
+✅ 34. Automatic delete/modify document against time or other variable
 35. Dalam kondisi apa Bagasi.status = Canceled. Dan ini apa efeknya ke User
 ✅ 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
     barulah kita minta upload dokumen penerbangan / bukti payment
+✅ 38. Node-scheduled Mengubah Model.status = Closed dan Canceled Delivered dan Canceled ke Model.active = false
+✅ 39. Perhatikan, saat User updateBagasi.waktuBerangkat/waktuTiba, Order.bagasi.waktuBerangkat dan atau Order.waktuTiba tidak terupdated!
+    Ini harus di fix karena mempengaruhi Node-scheduled. 🟢Answer: Di fix dengan reference di Order.bagasiId nya tdk lg dgn full Object (Bagasi). Tapi hanya Bagasi: _id.
+40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
 
 
 
@@ -134,9 +144,13 @@ ORDER
 ✅ 30. Jika createOrder sebuah bagasi dan sudah terbayar (status: ready), berarti boleh createOrder lg di bagasiID yg sama (tdk ada batas maksimum untuk ini yg jls terbayar).
     Jika blm terbayar (status: preparing), maka arahkan ke updateOrder.
 ✅ 31. deleteOrder moshkelah. 🟢Answer: Betul moshkelah karena pake updateOne yg activate document midware di Order Model yg modify increment Bagasi
+✅ 34. Automatic delete/modify document against time or other variable
 36. Dalam kondisi apa Order.status = 'Delivered' atau 'Canceled'. Dan ini apa efeknya ke User
 ✅ 37. Lebih baik buat routes sendiri/midware utk upload document, agar setelah user createBagasi atau createOrder dan updateBagasi atau updateOrder = Success,
     barulah kita minta upload dokumen penerbangan / bukti payment
+✅ 38. Node-scheduled Mengubah Model.status = Closed dan Canceled Delivered dan Canceled ke Model.active = false
+✅ 39. Perhatikan, saat User updateBagasi.waktuBerangkat/waktuTiba, Order.bagasi.waktuBerangkat dan atau Order.waktuTiba tidak terupdated!
+    Ini harus di fix karena mempengaruhi Node-scheduled. 🟢Answer: Di fix dengan reference di Order.bagasiId nya tdk lg dgn full Object (Bagasi). Tapi hanya Bagasi: _id.
 
 
 
@@ -144,13 +158,9 @@ USER
 4. Get User utk manipulate data User
 
 
-
+❗REMINDER❗
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
 ❗Don’t forget security Middleware
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 ❗20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
-❗34. Automatic delete/modify document against time or other variable
-
-const bagasi = await Bagasi.findOne(bagasiId)
-adminFeeRp: +((this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX),
-balanceRp: +((this.jumlahKg * bagasi.hargaRp) - (this.jumlahKg * bagasi.hargaRp) * process.env.BAGASI_TAX), 
+❗40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi

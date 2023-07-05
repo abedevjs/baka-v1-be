@@ -1,3 +1,5 @@
+const schedule = require('./utility/node-schedule');
+
 //! Environment configuration --start
 const dotenv = require('dotenv');
 dotenv.config({ path: './config.env' });
@@ -20,7 +22,10 @@ mongoose.connect(process.env.DATABASE_LOCAL, { //* Line ini enable klo aktif kan
     // useNewUrlParser: true, //tdk usah krn sdh pake mongoose v6
     // useCreateIndex: true, //tdk usah krn sdh pake mongoose v6
     // useFindAndModify: false //tdk usah krn sdh pake mongoose v6
-}).then((data) => console.log(`Database is connected to: ${data.connection.host}`));
+}).then((data) => {
+    console.log(`Database is connected to: ${data.connection.host}`)
+    schedule.startJob();
+});
 //! Database setup --end
 
 //! Server --start
