@@ -5,7 +5,7 @@ const authController = require("../controller/authController");
 const adminRouter = express.Router();
 
 //! All routes are restricted to LoggedIn User
-adminRouter.use(authController.protect);
+// adminRouter.use(authController.protect);
 adminRouter.use(authController.authenticate);
 
 //! All routes are restricted to ADMIN

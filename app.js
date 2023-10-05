@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
 
 const homeRoutes = require("./routes/homeRouter");
 const bagasiRoutes = require("./routes/bagasiRouter");
@@ -23,6 +24,13 @@ const app = express();
 
 //! Middlewares Security --start
 app.use(express.json({ limit: "10kb" })); //built-in middleware dr express utk membaca dan memproses incoming input data dari body/client
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+    credentials: true,
+  })
+);
 //! Middlewares Security --end
 
 //! Middlewares Operational --start
@@ -41,7 +49,9 @@ app.use(
     secret: "keyboard cat",
     resave: false, //we dont want to save a session if nothing is modified
     saveUninitialized: false, //dont create a session until something is stored
-
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
     // store: MongoStore.create({ //* LOCAL database
     //     mongoUrl: process.env.DATABASE_LOCAL,
     //     ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default

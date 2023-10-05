@@ -9,9 +9,9 @@ const orderRouter = express.Router({ mergeParams: true });
 //* www.nama.com/bagasi/:bagasiId/order
 orderRouter
   .route("/")
-  .get(authController.protect, orderController.getAllOrder)
+  .get(authController.authenticate, orderController.getAllOrder)
   .post(
-    authController.protect,
+    authController.authenticate,
     orderController.uploadMiddleware,
     orderController.createOrder
   );
@@ -19,13 +19,13 @@ orderRouter
 //* www.nama.com/order/:id
 orderRouter
   .route("/:id")
-  .get(authController.protect, orderController.getOneOrder)
+  .get(authController.authenticate, orderController.getOneOrder)
   .patch(
-    authController.protect,
+    authController.authenticate,
     orderController.uploadMiddleware,
     orderController.updateOrder
   )
-  .delete(authController.protect, orderController.deleteOrder);
+  .delete(authController.authenticate, orderController.deleteOrder);
 
 //* www.nama.com/order/:orderId/upload
 // orderRouter.use('/:orderId?/upload', uploadRoutes);

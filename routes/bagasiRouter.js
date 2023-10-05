@@ -10,14 +10,14 @@ const bagasiRouter = express.Router();
 bagasiRouter
   .route("/")
   .get(bagasiController.getAllBagasi)
-  .post(authController.protect, bagasiController.createBagasi);
+  .post(authController.authenticate, bagasiController.createBagasi);
 
 //* www.nama.com/bagasi/:id
 bagasiRouter
   .route("/:id")
-  .get(authController.protect, bagasiController.getOneBagasi)
-  .patch(authController.protect, bagasiController.updateBagasi)
-  .delete(authController.protect, bagasiController.deleteBagasi);
+  .get(authController.authenticate, bagasiController.getOneBagasi)
+  .patch(authController.authenticate, bagasiController.updateBagasi)
+  .delete(authController.authenticate, bagasiController.deleteBagasi);
 
 //* www.nama.com/bagasi/:bagasiId/order
 bagasiRouter.use("/:bagasiId/order", orderRoutes);

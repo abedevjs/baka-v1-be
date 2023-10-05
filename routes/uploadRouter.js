@@ -8,7 +8,7 @@ const uploadRouter = express.Router({ mergeParams: true });
 uploadRouter
   .route("/:id?")
   .patch(
-    authController.protect,
+    authController.authenticate,
     uploadController.uploadMiddleware,
     uploadController.updateUploadDokumen
   );

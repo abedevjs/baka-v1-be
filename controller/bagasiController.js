@@ -1,5 +1,6 @@
 const Bagasi = require('./../model/bagasiModel');
 const User = require('./../model/userModel')
+const UserAuth = require('./../model/userAuthModel')
 const catchAsync = require('./../utility/catchAsync');
 const AppError = require('./../utility/appError');
 
@@ -51,10 +52,10 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     if (req.user.bagasi.length >= process.env.MAX_BAGASI) return next(new AppError('Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢', 403));
 
     //todo 3. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
-    const user = await User.findById(req.user.id);
+    const user = await UserAuth.findById(req.user.id);
 
     if (!user.telpon) {
-        const addTelponToUser = await User.findByIdAndUpdate(user, {
+        const addTelponToUser = await UserAuth.findByIdAndUpdate(user, {
             telpon: req.body.telpon
         }, {
             new: true,
@@ -74,7 +75,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
         availableKg: req.body.availableKg,
         hargaRp: req.body.hargaRp,
         catatan: req.body.catatan,
-        owner: await User.findById(req.user.id)
+        owner: await UserAuth.findById(req.user.id)
     });
 
     if (!bagasi) return next(new AppError('Terjadi kesalahan dalam mendaftarkan bagasi Kakak 😢', 400))
@@ -149,8 +150,8 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
     if (id.bookedKg > 0) return next(new AppError('Bagasi yang sudah di booking oleh user lain tidak dapat di cancel ya Kak 😢. Hubungi Admin', 401));
 
     //todo 4. Delete bagasiId from User.bagasi and Update the new document
-    const user = await User.findById(req.user.id);
-    const userBagasi = await User.findByIdAndUpdate(user, {
+    const user = await UserAuth.findById(req.user.id);
+    const userBagasi = await UserAuth.findByIdAndUpdate(user, {
         $pull: {
             bagasi: {
                 $in: [req.params.id]
