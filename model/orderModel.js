@@ -41,7 +41,10 @@ const orderSchema = new mongoose.Schema({
   },
   catatan: {
     type: String,
-    maxLength: [60, "Pesan nya terlalu panjang kak"],
+    maxLength: [
+      process.env.MAX_LENGTH_CATATAN,
+      `Maksimal panjang catatan yang diperbolehkan hanya ${process.env.MAX_LENGTH_CATATAN} kak 🙁 `,
+    ],
   },
   status: {
     type: String,

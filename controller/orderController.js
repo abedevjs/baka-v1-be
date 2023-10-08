@@ -75,9 +75,12 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     );
 
   //todo 4. Cek user tdk punya lebih dari 10 aktif order di bagasi yang berbeda2.
-  if (req.user.order.length >= process.env.MAX_ORDER)
+  if (req.user.order.length >= process.env.MAX_ORDER_ACTIVE)
     return next(
-      new AppError("Kakak hanya boleh memiliki 10 order aktif 😢", 403)
+      new AppError(
+        `Kakak hanya boleh memiliki maks. ${process.env.MAX_ORDER_ACTIVE} order aktif 🙁`,
+        403
+      )
     );
 
   //todo 5.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI

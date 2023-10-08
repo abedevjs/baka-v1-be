@@ -49,11 +49,12 @@ exports.getOneBagasi = catchAsync(async (req, res, next) => {
 });
 
 exports.createBagasi = catchAsync(async (req, res, next) => {
+  // console.log(req.user);
   //todo 2. Preventing create more than 3 bagasi
-  if (req.user.bagasi.length >= process.env.MAX_BAGASI)
+  if (req.user.bagasi.length >= process.env.MAX_BAGASI_ACTIVE)
     return next(
       new AppError(
-        "Kakak hanya boleh memiliki 3 bagasi aktif yang terjual 😢",
+        `Kakak hanya boleh memiliki maks. ${process.env.MAX_BAGASI_ACTIVE} bagasi aktif. Mohon hapus dulu bagasi yang lain 🙏.`,
         403
       )
     );
@@ -123,21 +124,25 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
   if (bagasi.owner._id.toString() !== req.user.id)
     return next(
       new AppError(
-        "Kakak bukan pemilik/penjual bagasi ini 😢. Akses di tolak ya Kak",
+        "Kakak bukan pemilik bagasi ini 🙁. Akses di tolak ya Kak",
         401
       )
     );
 
-  //todo 4. Check if ordered Bagasi is bigger than the new one, request denied.
-  // console.log('😃', (((bagasi.bookedKg + Number(req.body.availableKg)) - bagasi.bookedKg) > 60));
-  if (
-    bagasi.bookedKg > req.body.availableKg ||
-    (req.body.availableKg == 60 && bagasi.initialKg == 60) ||
-    bagasi.bookedKg + Number(req.body.availableKg) - bagasi.bookedKg > 60
-  )
+  //todo 4. Check if the updatedKg is bigger than process.env.MAX_BAGASI_KG, request denied.
+  if (req.body.availableKg > process.env.MAX_BAGASI_KG)
     return next(
       new AppError(
-        "Jumlah Bagasi yang dijual melebihi batas maksimal (60Kg) atau Bagasi yang telah dipesan lebih besar dari yang Kakak jual 😢. Jika mendesak, hubungi Admin.",
+        `Jumlah Bagasi yang dijual (${req.body.availableKg}Kg) melebihi batas maks. yang sudah ditentukan (${process.env.MAX_BAGASI_KG}Kg) 🙁.`,
+        401
+      )
+    );
+
+  //todo 5. Check if the updatedKg is lower than its alread bookedKg, request denied.
+  if (req.body.availableKg < bagasi.bookedKg)
+    return next(
+      new AppError(
+        `Bagasi yang telah dipesan (${bagasi.bookedKg}Kg) lebih besar dari yang ingin kakak jual (${req.body.availableKg}Kg).`,
         401
       )
     );
@@ -193,23 +198,20 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
   const id = await Bagasi.findById(req.params.id);
   if (!id)
     return next(
-      new AppError("Bagasi yang Kakak minta tidak ditemukan 😢", 404)
+      new AppError("Bagasi yang Kakak minta tidak ditemukan 🙁.", 404)
     );
 
   // todo 2. Check if he is the owner
   if (id.owner._id.toString() !== req.user.id)
     return next(
-      new AppError(
-        "Kakak bukan pemilik/penjual bagasi ini 😢. Akses di tolak ya Kak",
-        401
-      )
+      new AppError("Kakak bukan pemilik bagasi ini 🙁. Akses di tolak ⛔.", 401)
     );
 
   // todo 3. Check if bagasi has been ordered, request denied
   if (id.bookedKg > 0)
     return next(
       new AppError(
-        "Bagasi yang sudah di booking oleh user lain tidak dapat di cancel ya Kak 😢. Hubungi Admin",
+        "Bagasi yang sudah di beli tidak dapat di cancel ya Kak 🙁. Hubungi Admin.",
         401
       )
     );

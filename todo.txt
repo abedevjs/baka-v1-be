@@ -157,6 +157,7 @@ ORDER
 USER
 4. Get User utk manipulate data User
 
+PASCA INITIAL REACT CONNECT
 
 ❗REMINDER❗
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
@@ -164,3 +165,18 @@ USER
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 ❗20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
 ❗40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
+✅Algorithma sudah diperbaiki, jd di frontend defaultValue=initialKg tapi input=req.body.availableKg. Sehingga algo nya lbh simpel (silahkan cek updateBagasi)
+
+BAGASI
+
+ORDER
+🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
+✅ Jadi 1 user boleh order macam2 bagasi meskipun blm bayar, tapi maksimal 10. Jika yg di order adalah bagasi yang sama: klo sudah bayar -> diarahkan buat createOrder. klo blm bayar -> diarahkan updateOrder.
+
+USER
+🔴 User bisa update nama. Lakukan ini jg di frontend
+🔴 Get User khusus utk admin utk manipulate data User
+
+ADMIN
+🔴 Ketika updateBagasiStatus selain manipulate status dan dokumen, harap manipulate juga nama pesawat (update manual lwt form sm kyk status dan nama dokumen)
+🔴 Get User khusus utk admin utk manipulate data User

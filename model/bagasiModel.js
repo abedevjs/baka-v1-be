@@ -33,8 +33,14 @@ const bagasiSchema = new mongoose.Schema({
   availableKg: {
     type: Number,
     required: [true, "Pastikan jumlah bagasi(Kg) yang dijual"],
-    min: [0, "Jumlah minimal 0"],
-    max: [60, "Jumlah maksimal 60"],
+    min: [
+      process.env.MIN_BAGASI_KG,
+      `Jumlah minimal bagasi ${process.env.MIN_BAGASI_KG} Kg`,
+    ],
+    max: [
+      process.env.MAX_BAGASI_KG,
+      `Jumlah maksimal bagasi ${process.env.MAX_BAGASI_KG} kg`,
+    ],
   },
   bookedKg: {
     type: Number,
@@ -59,7 +65,7 @@ const bagasiSchema = new mongoose.Schema({
   },
   pesawat: {
     type: String,
-    default: "Maskapai akan di update manual oleh Admin",
+    default: "",
     // required: [true, 'Sertakan nama pesawat yang ditumpangi']
   },
   dokumen: {
@@ -71,7 +77,10 @@ const bagasiSchema = new mongoose.Schema({
   },
   catatan: {
     type: String,
-    maxLength: [60, "Pesan nya terlalu panjang kak"],
+    maxLength: [
+      process.env.MAX_LENGTH_CATATAN,
+      `Maksimal panjang catatan yang diperbolehkan hanya ${process.env.MAX_LENGTH_CATATAN} kak 🙁 `,
+    ],
   },
   status: {
     type: String,

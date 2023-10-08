@@ -25,6 +25,7 @@ exports.all = catchAsync(async (req, res) => {
 });
 
 exports.profil = catchAsync(async (req, res, next) => {
+  // console.log(req.user);
   const user = await UserAuth.findById(req.user.id).populate({
     path: "bagasi order",
   });
