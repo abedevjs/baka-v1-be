@@ -167,6 +167,11 @@ PASCA INITIAL REACT CONNECT
 ❗40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
 ✅Algorithma sudah diperbaiki, jd di frontend defaultValue=initialKg tapi input=req.body.availableKg. Sehingga algo nya lbh simpel (silahkan cek updateBagasi)
 
+PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
+✍️ Mengubah algorithma logika req.body.availableKg tidak lebih ringan dari bookedKg di createBagasi
+✍️ Menghapus eksekusi update user.telpon di createBagasi. Api update user.telpon sudah di handle di frontend
+
+
 BAGASI
 
 ORDER
