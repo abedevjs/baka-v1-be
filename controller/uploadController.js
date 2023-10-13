@@ -33,12 +33,12 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
   if (currentUser.bagasi.length == 0 && currentUser.order.length == 0)
     return next(
       new AppError(
-        "User belum buat Bagasi atau Order. Upload Dokumen tidak diterima",
+        "Kk belum buat Bagasi atau Order. Upload Dokumen tidak diterima",
         403
       )
     );
 
-  //! WITHOUT req.params.id
+  //! WITHOUT req.params.id. Jika user upload saat createBagasi atau createOrder?
   if (!req.params.id) {
     //todo 1. Upload new Dokumen ke User.dokumen
     const newDokumen = await UserAuth.findByIdAndUpdate(
@@ -62,7 +62,7 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
         )
       );
   } else {
-    //! WITH req.params.id
+    //! WITH req.params.id. Jika user upload saat updateBagasi atau updateOrder?
     //todo 1. Grab req.params.id. Document masih unknown karena belum tau Bagasi dokumen atau Order dokumen
     const docID = req.params.id;
 

@@ -30,6 +30,8 @@ exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
   if (!bagasiID)
     return next(new AppError("Bagasi yang Admin minta tidak tersedia 😢", 404));
 
+  //todo 2. Pastikan dulu Bagasi.status yg mw di update 'Scheduled'. Krn status yg lain ('Closed' dan 'Canceled sdh di handle nodeScheduler)?
+
   //todo 2. Update Bagasi.status
   const updateBagasi = await Bagasi.findByIdAndUpdate(
     bagasiID,

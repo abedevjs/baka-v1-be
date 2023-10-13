@@ -173,6 +173,7 @@ PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
 
 
 BAGASI
+🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened, bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
@@ -185,3 +186,4 @@ USER
 ADMIN
 🔴 Ketika updateBagasiStatus selain manipulate status dan dokumen, harap manipulate juga nama pesawat (update manual lwt form sm kyk status dan nama dokumen)
 🔴 Get User khusus utk admin utk manipulate data User
+🔴 Jika Baka sudah jalan, sdh dapat feedback, minta saran dengan fitur baru JASTIP pada customer
