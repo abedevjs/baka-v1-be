@@ -32,21 +32,16 @@ exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
 
   //todo 2. Pastikan dulu Bagasi.status yg mw di update 'Scheduled'. Krn status yg lain ('Closed' dan 'Canceled sdh di handle nodeScheduler)?
 
-  //todo 2. Update Bagasi.status
-  const updateBagasi = await Bagasi.findByIdAndUpdate(
-    bagasiID,
-    {
-      status: req.body.status,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
-  if (!updateBagasi)
-    return next(new AppError("Update status bagasi gagal", 400));
+  if (bagasiID.status !== "Scheduled") {
+    return next(
+      new AppError(
+        `Tidak bs update bagasi status. Krn status bagasi yg skrg adalah ${bagasiID.status}`,
+        400
+      )
+    );
+  }
 
-  //todo 3. Jika Bagasi tdk ada dokumen. Memindahkan secara manual nama dokumen dari User.dokumen ke Bagasi.dokumen dengan cara copy paste nama dokumen ke req.body.dokumen
+  //todo 3. Jika Bagasi tdk ada dokumen, berarti dokumen yang di upload User tersimpan di User.dokumen (upload dokumen tanpa bagasiID). Memindahkan secara manual nama dokumen dari User.dokumen ke Bagasi.dokumen dengan cara copy paste nama dokumen ke req.body.dokumen
   const ownerID = bagasiID.owner._id;
   const currentOwner = await UserAuth.findById(ownerID);
   const mergedArr = currentOwner.bagasi.concat(currentOwner.order);
@@ -54,7 +49,9 @@ exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
   //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty.
   if (!bagasiID.dokumen && !!mergedArr) {
     //* Cek jika nama dokumen berbeda / Admin salah copas
-    if (req.body.dokumen != currentOwner.dokumen)
+    // if (req.body.dokumen != currentOwner.dokumen)
+    if (!currentOwner.dokumen.includes(req.body.dokumen))
+      //req.body.dokumen != currentOwner.dokumen
       return next(
         new AppError(
           "Nama dokumennya beda! req.body.dokumen != currentOwner.dokumen",
@@ -99,11 +96,27 @@ exports.updateBagasiStatus = catchAsync(async (req, res, next) => {
       );
   }
 
+  //todo 4. Update Bagasi.status
+  const updateBagasiStatusDanPesawat = await Bagasi.findByIdAndUpdate(
+    bagasiID,
+    {
+      status: req.body.status,
+      pesawat: req.body.pesawat,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+  if (!updateBagasiStatusDanPesawat)
+    return next(new AppError("Update status bagasi gagal", 400));
+
   res.status(200).json({
     status: "Success",
     message:
       "Dokumen penerbangan telah di verifikasi. Bagasi sudah bisa di order",
-    statusBagasi: updateBagasi.status,
+    statusBagasi: updateBagasiStatusDanPesawat.status,
+    pesawatBagasi: updateBagasiStatusDanPesawat.pesawat,
   });
 });
 
@@ -163,7 +176,7 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
   //todo 6. Calculate Kg and Rp di Bagasi.order.id (loop)
   const bagasiOrderIds = Object.values(currentBagasi.order).map((id) => id); // '4f5sa', '87f5f'
 
-  //todo 1. Calculate Kg in Bagasi.availableKg
+  //todo 6a. Calculate Kg in Bagasi.availableKg
   let jumlahKgArray = [];
   await Promise.all(
     bagasiOrderIds.map(async (el) => {
@@ -173,7 +186,7 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
   );
   const totalJumlahKg = jumlahKgArray.reduce((acc, el) => acc + el, 0);
 
-  //todo 2. Calculate Rp in Bagasi.balanceRp
+  //todo 6b. Calculate Rp in Bagasi.balanceRp
   let biayaRpArray = [];
   await Promise.all(
     bagasiOrderIds.map(async (el) => {
@@ -243,7 +256,8 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
   //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty.
   if (!order.dokumen && !!mergedArr) {
     //* Cek jika nama dokumen berbeda / Admin salah copas
-    if (req.body.dokumen != currentOwner.dokumen)
+    if (!currentOwner.dokumen.includes(req.body.dokumen))
+      //req.body.dokumen != currentOwner.dokumen
       return next(
         new AppError(
           "Nama dokumennya beda! req.body.dokumen != currentOwner.dokumen",
@@ -251,7 +265,7 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
         )
       );
 
-    //* Renaming Bagasi.dokumen dari req.body.dokumen (Admin yang isi manual)
+    //* Renaming Order.dokumen dari req.body.dokumen (Admin yang isi manual)
     const updateOrderDokumen = await Order.findByIdAndUpdate(
       order,
       {

@@ -97,7 +97,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (count.length != check.length)
       return next(
         new AppError(
-          "Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃",
+          "Kakak sudah memesan bagasi ini. Untuk update Order, silahkan ke Area User 🤗",
           403
         )
       );

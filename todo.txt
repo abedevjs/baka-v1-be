@@ -170,6 +170,7 @@ PASCA INITIAL REACT CONNECT
 PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
 ✍️ Mengubah algorithma logika req.body.availableKg tidak lebih ringan dari bookedKg di createBagasi
 ✍️ Menghapus eksekusi update user.telpon di createBagasi. Api update user.telpon sudah di handle di frontend
+✍️ di admin updateBagasiStatus: dari if (req.body.dokumen != currentOwner.dokumen) ke if (!currentOwner.dokumen.includes(req.body.dokumen)) 
 
 
 BAGASI
@@ -183,7 +184,14 @@ USER
 🔴 User bisa update nama. Lakukan ini jg di frontend
 🔴 Get User khusus utk admin utk manipulate data User
 
+UPLOAD
+🔴 Klo user.dokumen sdh ada dokumen dan bagasi.dokumen jg sdh ada dokumen, bagaimana solusinya di admin/status-bagasi/:id?
+
 ADMIN
 🔴 Ketika updateBagasiStatus selain manipulate status dan dokumen, harap manipulate juga nama pesawat (update manual lwt form sm kyk status dan nama dokumen)
 🔴 Get User khusus utk admin utk manipulate data User
 🔴 Jika Baka sudah jalan, sdh dapat feedback, minta saran dengan fitur baru JASTIP pada customer
+🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth. 
+🔴 Di nodeschedule, bagasi/order yg status nya jadi false secara otomatis tp di user nya id bagasi/order tsb msh ada, jadi perlu id tsb perlu dihapus jg di user.bagasi atau user.order
+🔴 Buat model untuk dokumen, setiap user upload dokumen, masuk ke database dokumen. Admin mudah cek di database dokumen terbaru yang di upload, agar selanjutnya bisa di aktifkan
+🔴 //* Renaming Bagasi.dokumen dari req.body.dokumen (Admin yang isi manual) dan //* Renaming Order.dokumen dari req.body.dokumen (Admin yang isi manual) perlu di keluarin dari scope if (!order.dokumen && !!mergedArr), karena jika admin asal nulis req.body.dokumen dan saat bersamaan bagasi/order.dokumen bukan empty string, otomatis lolos, bagasi/order status nya ganti tanpa terupdate di dokumennya, nama dokumen yg bener yg mana.
