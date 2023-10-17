@@ -45,7 +45,20 @@ const userSchema = new mongoose.Schema({
     },
   ],
   orderBagasiId: Array,
+  active: {
+    type: Boolean,
+    // select: true,
+    // default: true,
+  },
 });
+
+//! Document Middleware --start
+userSchema.pre("save", async function (next) {
+  this.active = true;
+
+  next();
+});
+//! Document Middleware --end
 
 const UserAuth = mongoose.model("UserAuth", userSchema);
 module.exports = UserAuth;

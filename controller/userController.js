@@ -2,6 +2,8 @@ const User = require("./../model/userModel");
 const UserAuth = require("./../model/userAuthModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
+const Bagasi = require("../model/bagasiModel");
+const Order = require("../model/orderModel");
 
 const filterBody = (obj, ...allowedFields) => {
   const newObj = {};
@@ -74,14 +76,54 @@ exports.hapus = catchAsync(async (req, res, next) => {
   const user = await UserAuth.findById(req.user.id);
   if (!user) return next(new AppError("User ini tidak ditemukan", 404));
 
-  //todo 2. Check if theres any active Bagasi/Order
-  if (user.bagasi.length > 0 || user.order.length > 0)
-    return next(
-      new AppError(
-        "User yang masih memiliki bagasi/order aktif belum bisa di hapus kakak 😢",
-        401
-      )
+  //todo 2. Check if theres any active Bagasi. Tidak ada bagasi yg sudah di booking (bookedKg == 0)
+  if (user.bagasi.length > 0) {
+    // ambil id nya
+    const bagasiIds = user.bagasi.map((el) => el);
+
+    //buat array kosong
+    let isBookedKg = [];
+
+    //looping tiap Bagasi berdasarkan id nya, terus diambil property .bookedKg yang value nya di masukin ke array isBookedKg
+    await Promise.all(
+      bagasiIds.map(async (el) => {
+        isBookedKg.unshift((await Bagasi.findById(el)).bookedKg);
+      })
     );
+
+    //Cek jika dalam array isBookedKg ada salah satu elemen yang > 0 maka pasti bagasi tersebut sdh ready dan terbooking, jd ga bisa di delete
+    if (isBookedKg.some((el) => el > 0))
+      return next(
+        new AppError(
+          "Kakak masih memiliki Bagasi aktif. Permohonan ditolak untuk sementara"
+        )
+      );
+  }
+
+  //todo 3. Check if there's any active Order. Tidak ada order yg ready (status !== ready)
+  if (user.order.length > 0) {
+    // ambil id nya
+    const orderIds = user.order.map((el) => el);
+
+    //buat array kosong
+    let orderStatus = [];
+
+    //looping tiap Order berdasarkan id nya, terus diambil property status yang value nya di masukin ke array orderStatus
+    await Promise.all(
+      orderIds.map(async (el) => {
+        orderStatus.unshift((await Order.findById(el)).status);
+      })
+    );
+
+    //Cek jika dalam array orderStatus ada salah satu elemen yg status nya 'Ready', ga bisa di delete
+    if (orderStatus.some((el) => el == "Ready")) {
+      return next(
+        new AppError(
+          "Kakak masih memiliki Order aktif. Permohonan ditolak untuk sementara 🙁"
+        )
+      );
+    }
+  }
 
   //todo 3. If passed, delete disactivate user
   await UserAuth.findByIdAndUpdate(req.user.id, { active: false });

@@ -253,7 +253,7 @@ exports.activateOrder = catchAsync(async (req, res, next) => {
   const currentOwner = await UserAuth.findById(ownerID);
   const mergedArr = currentOwner.bagasi.concat(currentOwner.order);
 
-  //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty.
+  //*cek jika bagasi.dokumen = empty DAN user.bagasi dan user.order = tdk empty. Klo tidak masuk blok if-else ini, berarti user uploadDocs di url yg ada id nya. Makanya dy langsung tersimpan di order.dokumen bukan di user.dokumen.
   if (!order.dokumen && !!mergedArr) {
     //* Cek jika nama dokumen berbeda / Admin salah copas
     if (!currentOwner.dokumen.includes(req.body.dokumen))

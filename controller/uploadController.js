@@ -5,6 +5,7 @@ const UserAuth = require("./../model/userAuthModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
 const multerUpload = require("../utility/multer");
+const Dokumen = require("../model/dokumenModel");
 
 exports.uploadMiddleware = multerUpload.single("dokumen");
 
@@ -102,6 +103,13 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
     if (!newDokumen)
       return next(new AppError("Update Dokumen tidak berhasil 😢", 401));
   }
+
+  //todo Create dokumen ke Dokumen db
+  const newDoc = await Dokumen.create({ nama: updateDokumen });
+  if (!newDoc)
+    return next(
+      new AppError("Menambahkan Dokumen baru ke DB tidak berhasil 🙁", 401)
+    );
 
   res.status(200).json({
     status: "Success",

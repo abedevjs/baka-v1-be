@@ -54,7 +54,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
   if (req.user.bagasi.length >= process.env.MAX_BAGASI_ACTIVE)
     return next(
       new AppError(
-        `Kakak hanya boleh memiliki maks. ${process.env.MAX_BAGASI_ACTIVE} bagasi aktif. Mohon hapus dulu bagasi yang lain 🙏.`,
+        `Kakak hanya boleh memiliki maks. ${process.env.MAX_BAGASI_ACTIVE} bagasi aktif. Mohon hapus dulu bagasi yang lain`,
         403
       )
     );
@@ -128,6 +128,14 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
       new AppError(
         "Kakak bukan pemilik bagasi ini 🙁. Akses di tolak ya Kak",
         401
+      )
+    );
+
+  //todo 3. If status = 'Closed', Bagasi can't be updated.
+  if (bagasi.status == "Closed")
+    return next(
+      new AppError(
+        "Bagasi ini sudah siap Ready kak. Silahkan buat Jual-Bagasi yang baru 🙁"
       )
     );
 

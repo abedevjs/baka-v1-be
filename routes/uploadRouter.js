@@ -7,7 +7,7 @@ const uploadRouter = express.Router({ mergeParams: true });
 //* www.nama.com/upload/:id?
 uploadRouter
   .route("/:id?")
-  .patch(
+  .post(
     authController.authenticate,
     uploadController.uploadMiddleware,
     uploadController.updateUploadDokumen

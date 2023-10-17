@@ -161,11 +161,13 @@ PASCA INITIAL REACT CONNECT
 
 ❗REMINDER❗
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
-❗Don’t forget security Middleware
-❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
+    ✅ done
 ❗20. Pada saat createOrder, di periksa dulu status bagasi. jika 'opened', tombol 'pesan bagasi sekarang' di UI jd enabled
+    ✅ done
 ❗40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
-✅Algorithma sudah diperbaiki, jd di frontend defaultValue=initialKg tapi input=req.body.availableKg. Sehingga algo nya lbh simpel (silahkan cek updateBagasi)
+    ✅Algorithma sudah diperbaiki, jd di frontend defaultValue=initialKg tapi input=req.body.availableKg. Sehingga algo nya lbh simpel (silahkan cek updateBagasi)
+❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
+❗Don’t forget security Middleware
 
 PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
 ✍️ Mengubah algorithma logika req.body.availableKg tidak lebih ringan dari bookedKg di createBagasi
@@ -174,24 +176,37 @@ PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
 
 
 BAGASI
-🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened, bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
+🔴 Jika status bagasi 'Closed', apakah user boleh update beratnya lagi? boleh ga user tambah kg bagasi yg ingin dy jual? Utk sementara, klo status 'Closed', bagasi tdk bs di update
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
 ✅ Jadi 1 user boleh order macam2 bagasi meskipun blm bayar, tapi maksimal 10. Jika yg di order adalah bagasi yang sama: klo sudah bayar -> diarahkan buat createOrder. klo blm bayar -> diarahkan updateOrder.
 
 USER
+🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
+    ✅ done
 🔴 User bisa update nama. Lakukan ini jg di frontend
 🔴 Get User khusus utk admin utk manipulate data User
 
 UPLOAD
 🔴 Klo user.dokumen sdh ada dokumen dan bagasi.dokumen jg sdh ada dokumen, bagaimana solusinya di admin/status-bagasi/:id?
+    ✅ saat admin mengisi body.dokumen pastikan itu dokumen yang sdh di periksa dan valid, agar ter update di bagasi/order.dokumen
+🔴 //* Renaming Order.dokumen dari req.body.dokumen (Admin yang isi manual) perlu di keluarin dari scope if (!order.dokumen && !!mergedArr), karena jika admin asal nulis req.body.dokumen dan saat bersamaan bagasi/order.dokumen bukan empty string, otomatis lolos, bagasi/order status nya ganti tanpa terupdate di dokumennya, nama dokumen yg bener yg mana.
+    ✅ ini menunjukkan bahwa user upload dokumen di url yg ada id nya updateBagasi/:id atau updateOrder/:id. Admin hanya perlu memastikan mana dokumen yang valid dan menuliskannya secara manual di req.body.dokumen agar dokumen tsb terupdate di bagasi/order.dokumen
 
 ADMIN
 🔴 Ketika updateBagasiStatus selain manipulate status dan dokumen, harap manipulate juga nama pesawat (update manual lwt form sm kyk status dan nama dokumen)
+    ✅ done
+🔴 Buat model untuk dokumen, setiap user upload dokumen, masuk ke database dokumen. Admin mudah cek di database dokumen terbaru yang di upload, agar selanjutnya bisa di aktifkan
+    ✅ done
 🔴 Get User khusus utk admin utk manipulate data User
 🔴 Jika Baka sudah jalan, sdh dapat feedback, minta saran dengan fitur baru JASTIP pada customer
-🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth. 
+
+USUL ADDOL
+🔴 Pada model Bagasi, tambahkan alamat kotaDari dan alamat kotaTujuan. Telpon dan alamat akan ter ekspos setelah payment valid / order.status = 'Ready'
+🔴 Pada updateOrder ada tombol 'Selesai'. Klo di klik, berarti order.status == 'Delivered', payment di release ke bagasi owner.
+🔴 Tombol 'Selesai' pada updateOrder akan mengubah status order jd 'Delivered', di User.order id nya terhapus. Di Order.active == false (akan di handle nodeshedule setelah 2minggu)
+🔴 +3hari setelah TglTiba bagasi, Tombol 'Selesai' otomatis activated (nodeschedule) 
+🔴 Pada Bagasi ketika semua order list bagasi tsb statusnya 'Delivered', maka bagasi.status == 'Completed', bagasi.active == false (akan di handle nodeshedule setelah 2minggu). Di User.bagasi id nya terhapus
 🔴 Di nodeschedule, bagasi/order yg status nya jadi false secara otomatis tp di user nya id bagasi/order tsb msh ada, jadi perlu id tsb perlu dihapus jg di user.bagasi atau user.order
-🔴 Buat model untuk dokumen, setiap user upload dokumen, masuk ke database dokumen. Admin mudah cek di database dokumen terbaru yang di upload, agar selanjutnya bisa di aktifkan
-🔴 //* Renaming Bagasi.dokumen dari req.body.dokumen (Admin yang isi manual) dan //* Renaming Order.dokumen dari req.body.dokumen (Admin yang isi manual) perlu di keluarin dari scope if (!order.dokumen && !!mergedArr), karena jika admin asal nulis req.body.dokumen dan saat bersamaan bagasi/order.dokumen bukan empty string, otomatis lolos, bagasi/order status nya ganti tanpa terupdate di dokumennya, nama dokumen yg bener yg mana.
+🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth. 
