@@ -12,9 +12,33 @@ const bagasiSchema = new mongoose.Schema({
     type: String,
     required: [true, "Bagasi ini berangkat dari mana?"],
   },
+  alamatDari: {
+    type: String,
+    required: [true, "Tulis alamat dimana pembeli bagasi mengirim titipannya"],
+    minLength: [
+      process.env.MIN_LENGTH_ALAMAT,
+      `Minimal panjang alamat kota asal yang diperbolehkan hanya ${process.env.MIN_LENGTH_ALAMAT} karakter kak `,
+    ],
+    maxLength: [
+      process.env.MAX_LENGTH_ALAMAT,
+      `Maksimal panjang alamat kota asal yang diperbolehkan hanya ${process.env.MAX_LENGTH_ALAMAT} karakter kak`,
+    ],
+  },
   tujuan: {
     type: String,
     required: [true, "Bagasi ini berangkat kemana?"],
+  },
+  alamatTujuan: {
+    type: String,
+    required: [true, "Tulis alamat dimana pembeli bagasi mengambil titipannya"],
+    minLength: [
+      process.env.MIN_LENGTH_ALAMAT,
+      `Minimal panjang alamat kota tujuan yang diperbolehkan hanya ${process.env.MIN_LENGTH_ALAMAT} karakter kak `,
+    ],
+    maxLength: [
+      process.env.MAX_LENGTH_ALAMAT,
+      `Maksimal panjang alamat kota tujuan yang diperbolehkan hanya ${process.env.MAX_LENGTH_ALAMAT} karakter kak`,
+    ],
   },
   waktuBerangkat: {
     // YYYY-MM-DD
@@ -79,13 +103,13 @@ const bagasiSchema = new mongoose.Schema({
     type: String,
     maxLength: [
       process.env.MAX_LENGTH_CATATAN,
-      `Maksimal panjang catatan yang diperbolehkan hanya ${process.env.MAX_LENGTH_CATATAN} kak 🙁 `,
+      `Maksimal panjang catatan yang diperbolehkan hanya ${process.env.MAX_LENGTH_CATATAN} kak`,
     ],
   },
   status: {
     type: String,
     enum: {
-      values: ["Scheduled", "Opened", "Closed", "Canceled"],
+      values: ["Scheduled", "Opened", "Closed", "Unloaded", "Canceled"],
     },
     default: "Scheduled",
   },

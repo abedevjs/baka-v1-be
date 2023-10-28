@@ -20,7 +20,12 @@ const multerStorage = multer.diskStorage({
     //mimetype: 'image/jpeg'; ini isi dari req.file
     const ext = file.mimetype.split("/")[1]; //jpeg
     // callback(null, `${req.user.nama}-${file.originalname}.${ext}`);
-    callback(null, `${req.user.email}-${Date.now()}-${file.originalname}`);
+    callback(
+      null,
+      `${req.user.email ? req.user.email : req.user.nama}-${Date.now()}-${
+        file.originalname
+      }`
+    );
     //first argument is error if error, and if valid is null
     //second argument is the how you name your file
     //${req.user-id} is logged in user id

@@ -176,11 +176,16 @@ PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
 
 
 BAGASI
+🔴 Update alamatDari only yes to status [Scheduled, Opened]. Update alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
+    ✅ done
 🔴 Jika status bagasi 'Closed', apakah user boleh update beratnya lagi? boleh ga user tambah kg bagasi yg ingin dy jual? Utk sementara, klo status 'Closed', bagasi tdk bs di update
+🔴 Kapan bagasi.status === 'Canceled' dan apa yg terjadi?. Diatur oleh nodeschedule kah?. bagasi.status === 'Canceled' jika hingga di hari waktuBerangkat status bagasi masih 'Scheduled', dan ya diatur nodeschedule
+
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
-✅ Jadi 1 user boleh order macam2 bagasi meskipun blm bayar, tapi maksimal 10. Jika yg di order adalah bagasi yang sama: klo sudah bayar -> diarahkan buat createOrder. klo blm bayar -> diarahkan updateOrder.
+    ✅ Jadi 1 user boleh order macam2 bagasi meskipun blm bayar, tapi maksimal 10. Jika yg di order adalah bagasi yang sama: klo sudah bayar -> diarahkan buat createOrder. klo blm bayar -> diarahkan updateOrder.
+🔴 Kapan order.status === 'Canceled' dan apa yg terjadi?. Diatur oleh nodeschedule kah?. order.status === 'Canceled' jika order.status == 'Preparing' hingga bagasi status nya 'Closed', dan ya diatur nodeschedule
 
 USER
 🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
@@ -204,9 +209,11 @@ ADMIN
 
 USUL ADDOL
 🔴 Pada model Bagasi, tambahkan alamat kotaDari dan alamat kotaTujuan. Telpon dan alamat akan ter ekspos setelah payment valid / order.status = 'Ready'
+    ✅ done
 🔴 Pada updateOrder ada tombol 'Selesai'. Klo di klik, berarti order.status == 'Delivered', payment di release ke bagasi owner.
 🔴 Tombol 'Selesai' pada updateOrder akan mengubah status order jd 'Delivered', di User.order id nya terhapus. Di Order.active == false (akan di handle nodeshedule setelah 2minggu)
-🔴 +3hari setelah TglTiba bagasi, Tombol 'Selesai' otomatis activated (nodeschedule) 
-🔴 Pada Bagasi ketika semua order list bagasi tsb statusnya 'Delivered', maka bagasi.status == 'Completed', bagasi.active == false (akan di handle nodeshedule setelah 2minggu). Di User.bagasi id nya terhapus
+🔴 Perlu buat router baru lagi. isinya ketika di execute akan set order.status == 'Delivered'
+🔴❓ Di hari H TglTiba Bagasi, tombol 'Selesai' baru bs enabled utk di klik, sebelumnya disabled={date today < waktuBerangkat}. +3hari setelah TglTiba bagasi, Tombol 'Selesai' otomatis activated (nodeschedule)?
+🔴❗ Bagasi yg active == true hanya bisa false jika ketika semua order list bagasi tsb statusnya 'Delivered', maka bagasi.status == 'Unloaded', bagasi.active == false (akan di handle nodeshedule setelah 2minggu). Di User.bagasi id nya terhapus
 🔴 Di nodeschedule, bagasi/order yg status nya jadi false secara otomatis tp di user nya id bagasi/order tsb msh ada, jadi perlu id tsb perlu dihapus jg di user.bagasi atau user.order
 🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth. 

@@ -15,6 +15,9 @@ exports.getAllOrder = catchAsync(async (req, res, next) => {
   if (req.query.sort) query = query.sort(req.query.sort);
   if (req.query.fields) query = query.select(req.query.fields);
   if (req.query.page) {
+    //* Tambahan knowledge cara query yg benar menurut mongoDB team. Apply for your next project
+    //* https://codebeyondlimits.com/articles/pagination-in-mongodb-the-only-right-way-to-implement-it-and-avoid-common-mistakes
+
     const page = req.query.page * 1 || 1;
     const limit = req.query.limit * 1 || 100;
     const skip = (page - 1) * limit;
@@ -64,9 +67,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   //todo 3. Cek owner bagasi tidak boleh order bagasi sendiri
   if (bagId.owner._id.toString() === req.user.id)
-    return next(
-      new AppError("Kakak tidak boleh membeli bagasi sendiri 😢", 403)
-    );
+    return next(new AppError("Kakak tidak boleh membeli bagasi sendiri", 403));
 
   //todo 3. Cek Bagasi.status. Hanya boleh order jika status bagasi sudah di verifikasi Admin (status: 'Opened')
   if (bagId.status != "Opened")
@@ -275,7 +276,7 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
   if (order.status !== "Preparing")
     return next(
       new AppError(
-        "Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan 🙂",
+        "Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan",
         401
       )
     );

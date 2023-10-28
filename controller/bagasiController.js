@@ -11,6 +11,9 @@ exports.getAllBagasi = catchAsync(async (req, res, next) => {
   if (req.query.sort) query = query.sort(req.query.sort);
   if (req.query.fields) query = query.select(req.query.fields);
   if (req.query.page) {
+    //* Tambahan knowledge cara query yg benar menurut mongoDB team. Apply for your next project
+    //* https://codebeyondlimits.com/articles/pagination-in-mongodb-the-only-right-way-to-implement-it-and-avoid-common-mistakes
+
     const page = req.query.page * 1 || 1;
     const limit = req.query.limit * 1 || 100;
     const skip = (page - 1) * limit;
@@ -92,7 +95,9 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
   //todo 5. If all those conditions above is fulfilled, create new Bagasi.
   const bagasi = await Bagasi.create({
     dari: req.body.dari,
+    alamatDari: req.body.alamatDari,
     tujuan: req.body.tujuan,
+    alamatTujuan: req.body.alamatTujuan,
     waktuBerangkat: req.body.waktuBerangkat,
     waktuTiba: req.body.waktuTiba,
     availableKg: req.body.availableKg,
@@ -131,11 +136,27 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 3. If status = 'Closed', Bagasi can't be updated.
-  if (bagasi.status == "Closed")
+  //todo 3. Jika user update alamatDari, maka alamatDari only yes to status [Scheduled, Opened]
+  if (
+    req.body.alamatDari !== bagasi.alamatDari &&
+    ["Closed", "Unloaded", "Canceled"].includes(bagasi.status)
+  )
     return next(
       new AppError(
-        "Bagasi ini sudah siap Ready kak. Silahkan buat Jual-Bagasi yang baru 🙁"
+        "Alamat Kota Asal hanya bisa di update jika status bagasi masih 'Scheduled' dan 'Opened' sj kk",
+        403
+      )
+    );
+
+  //todo Jika user update alamatTujuan maka alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
+  if (
+    req.body.alamatTujuan !== bagasi.alamatTujuan &&
+    bagasi.status == "Canceled"
+  )
+    return next(
+      new AppError(
+        "Alamat Kota Tujuan tidak bisa di update jika status bagasi 'Canceled' ya kak",
+        403
       )
     );
 
