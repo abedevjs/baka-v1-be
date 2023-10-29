@@ -27,6 +27,10 @@ orderRouter
   )
   .delete(authController.protect, orderController.deleteOrder);
 
+orderRouter
+  .route("/:id/delivered")
+  .patch(authController.protect, orderController.deliveredOrder);
+
 //* www.nama.com/order/:orderId/upload
 // orderRouter.use('/:orderId?/upload', uploadRoutes);
 
