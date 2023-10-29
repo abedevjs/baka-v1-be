@@ -254,6 +254,22 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deliveredOrder = catchAsync(async (req, res, next) => {
+  console.log(req.isAuthenticated());
+
+  if (!req.isAuthenticated()) return next(new AppError("talaso", 403));
+  console.log("Allah");
+
+  res.status(200).json({
+    status: "Success",
+    message: "Order Delivered",
+    requestedAt: req.time,
+    // data: {
+    //   updatedOrder,
+    // },
+  });
+});
+
 exports.deleteOrder = catchAsync(async (req, res, next) => {
   //* {{URL}}/order/634d1e13fc881dd5c6208968
 
