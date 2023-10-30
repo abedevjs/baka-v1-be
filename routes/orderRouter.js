@@ -29,7 +29,9 @@ orderRouter
 
 //* www.nama.com/order/:id/delivered
 //* Desc: Di eksekusi oleh user dan nodeschedule (jika user lupa). Akan set orderStatus dari 'Ready' ke 'Delivered'
-orderRouter.route("/:id/delivered").patch(orderController.deliveredOrder);
+orderRouter
+  .route("/:id/delivered")
+  .patch(authController.authenticate, orderController.deliveredOrder);
 
 //* www.nama.com/order/:orderId/upload
 // orderRouter.use('/:orderId?/upload', uploadRoutes);

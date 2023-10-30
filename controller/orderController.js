@@ -98,7 +98,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (count.length != check.length)
       return next(
         new AppError(
-          "Kakak sudah memesan bagasi ini. Untuk update Order, silahkan ke Area User 🤗",
+          "Kakak sudah memesan bagasi ini. Untuk update Order, silahkan ke Area User",
           403
         )
       );
@@ -178,29 +178,26 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   //todo 2. Check if Order is exist
   const order = await Order.findById(req.params.id);
   if (!order)
-    return next(new AppError("Order yang Kakak minta tidak tersedia 😢", 404));
+    return next(new AppError("Order yang Kakak minta tidak tersedia", 404));
 
   //todo 3. Check if Bagasi is exist
   const bagasi = order.bagasi;
   const currentBagasi = await Bagasi.findById(bagasi._id);
   if (!currentBagasi)
-    return next(new AppError("Bagasi yang kakak minta tidak tersedia 😢", 404));
+    return next(new AppError("Bagasi yang kakak minta tidak tersedia", 404));
 
   //todo 4. Check if User is owner
   if (order.owner._id.toString() !== req.user.id)
     return next(
-      new AppError(
-        "Kakak bukan pemilik order ini 😢. Akses di tolak ya Kak",
-        401
-      )
+      new AppError("Kakak bukan pemilik order ini. Akses di tolak ya Kak", 401)
     );
 
-  //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing')
+  //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing').
   // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
   if (order.status !== "Preparing")
     return next(
       new AppError(
-        "Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi 🙂",
+        "Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi",
         401
       )
     );
@@ -254,11 +251,108 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   });
 });
 
+//* Desc: Di eksekusi oleh user dan nodeschedule (jika user lupa dan jika memungkinkan). Akan set orderStatus dari 'Ready' ke 'Delivered'
 exports.deliveredOrder = catchAsync(async (req, res, next) => {
-  console.log(req.isAuthenticated());
+  //todo 1. take id and check the order if exists
+  const order = await Order.findById(req.params.id);
+  if (!order)
+    return next(new AppError("Order yang Kakak minta tidak tersedia", 404));
 
-  if (!req.isAuthenticated()) return next(new AppError("talaso", 403));
-  console.log("Allah");
+  //todo 2. Check if User is owner
+  if (order.owner._id.toString() !== req.user.id)
+    return next(
+      new AppError("Kakak bukan pemilik order ini. Akses di tolak ya Kak", 401)
+    );
+
+  //todo 3. Check only if status is Ready
+  if (order.status !== "Ready")
+    return next(
+      new AppError("Untuk akses ini Order status harus 'Ready' ya kak", 403)
+    );
+
+  //todo 4. Change the status from 'Ready' to 'Delivered'
+  const newStatusOrder = await Order.findByIdAndUpdate(
+    order,
+    { status: "Delivered" },
+    { new: true, runValidators: true }
+  );
+  if (!newStatusOrder)
+    return next(
+      new AppError(
+        "Ada kesalahan dalam mengubah status jadi Delivered. Coba beberapa saat lagi ya kak",
+        400
+      )
+    );
+
+  //todo 5. Remove the orderID from owner.order arr
+  const owner = await UserAuth.find(order.owner._id);
+  const removeOrderId = await UserAuth.findByIdAndUpdate(
+    owner,
+    {
+      $pull: { order: { $in: [req.params.id] } },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!removeOrderId)
+    return next(new AppError("Kesalahan dalam menyelesaikan Order", 400));
+
+  //todo 6. Check order.bagasi.id if all the order.status in Bagasi is 'Delivered'
+  const bagasi = await Bagasi.findById(order.bagasi._id); // {}
+  // const bagasi = await Bagasi.find({ _id: order.bagasi._id }); // [{}]
+  if (!bagasi)
+    return next(
+      new AppError("Terjadi kesalahan, Bagasi tidak ditemukan.", 400)
+    );
+
+  const bagasiOrderIds = Object.values(bagasi.order).map((id) => id); // ['4f5sa', '87f5f']
+  const orderStatuses = await Promise.all(
+    bagasiOrderIds.map(
+      async (orderID) => (await Order.findById(orderID)).status
+    )
+  ); // ['Ready', 'Ready', 'Delivered']
+
+  if (orderStatuses.every((el) => el == "Delivered")) {
+    //todo 7. if all the order.status are 'Delivered', change Bagasi.status to 'Unloaded'
+    const newStatusBagasi = await Bagasi.findByIdAndUpdate(
+      bagasi,
+      {
+        status: "Unloaded",
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!newStatusBagasi)
+      return next(
+        new AppError(
+          "Ada kesalahan mengubah status Bagasi ke Unloaded. Coba beberapa saat lagi ya kak",
+          400
+        )
+      );
+
+    //todo 8. if all the order.status are 'Delivered', remove the bagasiID from Owner.bagasi
+    const removeBagasiID = await UserAuth.findByIdAndUpdate(
+      bagasi.owner._id,
+      {
+        $pull: {
+          bagasi: {
+            $in: [order.bagasi._id],
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!removeBagasiID)
+      return next(
+        new AppError(
+          "Ada gangguan dari sistem kami. Coba beberapa saat lagi ya kak",
+          400
+        )
+      );
+  }
 
   res.status(200).json({
     status: "Success",
@@ -287,9 +381,9 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 3. Check Order.status. Hanya boleh delete jika order blm dibayar (status: 'Preparing')
+  //todo 3. Check Order.status. Hanya boleh delete jika order blm dibayar, sudah sampai, atau dibatalkan (status: 'Preparing', 'Delivered', 'Postponed')
   // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
-  if (order.status !== "Preparing")
+  if (order.status == "Ready")
     return next(
       new AppError(
         "Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan",
@@ -309,9 +403,11 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
   //     }
   // });
 
-  //todo 4. Check how many IDs of same bagasi on user.orderBagasiId, if has more than one, delete it, and add it back to user.orderBagasiId (step 6)
+  //todo 4. If User ordered the same Bagasi more than once, check how many IDs of same bagasi on user.orderBagasiId, if has more than one, delete it, and add it back to user.orderBagasiId (step 6)
   const user = await UserAuth.findById(req.user.id);
   const sameIDs = user.orderBagasiId.filter((el) => el == order.bagasi._id);
+  //* https://www.mongodb.com/community/forums/t/pull-only-one-item-in-an-array-of-instance-in-mongodb/12928/2
+  // Bisa dipertimbangkan cara untuk delete/pull only one item in an array
 
   //todo 5. hapus order dari User.order[id] dan Hapus bagasiId dari User.orderBagasiId[id]
   const userOrder = await UserAuth.findByIdAndUpdate(
