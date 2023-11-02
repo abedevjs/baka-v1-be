@@ -6,7 +6,6 @@ const bagasiSchema = new mongoose.Schema({
   tanggalDibuat: {
     type: Date,
     default: Date.now(),
-    select: false,
   },
   dari: {
     type: String,

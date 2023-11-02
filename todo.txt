@@ -157,7 +157,7 @@ ORDER
 USER
 4. Get User utk manipulate data User
 
-PASCA INITIAL REACT CONNECT
+============================== PASCA INITIAL REACT CONNECT ==============================
 
 ❗REMINDER❗
 ❗Don’t forget the enctype="multipart/form-data" in your form. karena pakai multer
@@ -169,30 +169,30 @@ PASCA INITIAL REACT CONNECT
 ❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 ❗Don’t forget security Middleware
 
-PERUBAHAN CODE BRANCH MASTER Master X fitur-UserAuth
-✍️ Mengubah algorithma logika req.body.availableKg tidak lebih ringan dari bookedKg di createBagasi
-✍️ Menghapus eksekusi update user.telpon di createBagasi. Api update user.telpon sudah di handle di frontend
-✍️ di admin updateBagasiStatus: dari if (req.body.dokumen != currentOwner.dokumen) ke if (!currentOwner.dokumen.includes(req.body.dokumen)) 
-
-
 BAGASI
 🔴 Update alamatDari only yes to status [Scheduled, Opened]. Update alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
     ✅ done
-🔴 Jika status bagasi 'Closed', apakah user boleh update beratnya lagi? boleh ga user tambah kg bagasi yg ingin dy jual? Utk sementara, klo status 'Closed', bagasi tdk bs di update
-🔴 Kapan bagasi.status === 'Canceled' dan apa yg terjadi?. Diatur oleh nodeschedule kah?. bagasi.status === 'Canceled' jika hingga di hari waktuBerangkat status bagasi masih 'Scheduled', dan ya diatur nodeschedule
-
+🔴❓ Jika status bagasi 'Closed', apakah user boleh update beratnya lagi? boleh ga user tambah kg bagasi yg ingin dy jual?
+    ✅ Utk sementara, klo status 'Closed', bagasi tdk bs di update
+🔴❓ Kapan bagasi.status === 'Canceled' dan apa yg terjadi?. Diatur oleh nodeschedule kah?.
+    ✅ bagasi.status === 'Canceled' jika hingga di hari waktuBerangkat status bagasi masih 'Scheduled', dan ya diatur nodeschedule case 1
+🔴❓ Guard clause di bagasiUpdate terlalu strict perlu di sync dgn FE react?
+🔴 Bagasi_tax bisa jadi 0% untuk user yang ada perjanjian partnership dgn Baka. Di UserAuth tambahkan property partnership: Boolean.
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
     ✅ Jadi 1 user boleh order macam2 bagasi meskipun blm bayar, tapi maksimal 10. Jika yg di order adalah bagasi yang sama: klo sudah bayar -> diarahkan buat createOrder. klo blm bayar -> diarahkan updateOrder.
-🔴 Kapan order.status === 'Canceled' dan apa yg terjadi?. Diatur oleh nodeschedule kah?. order.status === 'Canceled' jika order.status == 'Preparing' hingga bagasi status nya 'Closed', dan ya diatur nodeschedule
+🔴❓ Kapan order.status === 'Postponed' dan apa yg terjadi?. Diatur oleh nodeschedule kah?.
+    ✅ order.status === 'Postponed' jika order.status == 'Preparing' hingga bagasi status nya 'Closed', dan ya diatur nodeschedule case 3
 🔴❓ Perlu di pertimbangkan User hanya bisa order max 2 kali di Bagasi yg sama. Meskipun 2 Order tsb status == 'Ready'. Karena di deleteOrder, algo kita hanya bisa delete 1id dari Order.orderBagasiId arr?
+    ✅ Sdh di cek algo nya, sejauh ini bulletproof.
 
 USER
 🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
     ✅ done
 🔴 User bisa update nama. Lakukan ini jg di frontend
 🔴 Get User khusus utk admin utk manipulate data User
+🔴 Bagasi_tax bisa jadi 0% untuk user yang ada perjanjian partnership dgn Baka. Di UserAuth tambahkan property partnership: Boolean.
 
 UPLOAD
 🔴 Klo user.dokumen sdh ada dokumen dan bagasi.dokumen jg sdh ada dokumen, bagaimana solusinya di admin/status-bagasi/:id?
@@ -213,24 +213,27 @@ USUL ADDOL
     ✅ done
     ORDER
     🔴 Perlu buat router baru lagi. isinya ketika di execute akan set order.status == 'Delivered'. di User.order id nya terhapus. Di Order.active == false (akan di handle nodeshedule setelah 2minggu). trus dy cek ke bagasi nya, klo seluruh order di bagasi tsb sudah delivered jg, bagasi.status dari 'Closed' ke 'Unloaded'.
-        ✅ done
+        ✅ done api order/:id/delivered
     🔴 Pada updateOrder ada tombol 'Selesai'. Klo di klik, berarti order.status == 'Delivered', payment di release ke bagasi owner (secara manual).
-        ✅ done
+        ✅ done  api order/:id/delivered
     🔴 Klo tidak di klik misal user lupa, maka route ini akan ter execute di nodeschedule (jika memungkinkan, soalnya di route tsb ada req.params.id)
+        ✅ done nodeschedule case 4
     🔴 Tombol 'Selesai' pada updateOrder akan mengubah status order jd 'Delivered'.
-        ✅ done
+        ✅ done  api order/:id/delivered
     🔴❓ Di hari H TglTiba Bagasi, tombol 'Selesai' pada halaman updateOrder di UI baru bs enabled utk di klik, sebelumnya disabled={date today < waktuBerangkat}. +3hari setelah TglTiba bagasi, Tombol 'Selesai' otomatis activated (nodeschedule)?
-        ✅ status == "Ready" && Date.now() > Date.parse(waktuTiba)
+        ✅ di UI algonya begini: status == "Ready" && Date.now() > Date.parse(waktuTiba)
     BAGASI
     🔴❗ Bagasi yg active == true hanya bisa false jika ketika semua order list bagasi tsb statusnya 'Delivered', maka bagasi.status == 'Unloaded', bagasi.active == false (akan di handle nodeshedule setelah 2minggu). Di User.bagasi id nya terhapus
         ✅ Sudah di include kan di algorithma api/order/:id/delivered
 🔴 Di nodeschedule, bagasi/order yg status nya jadi false secara otomatis tp di user nya id bagasi/order tsb msh ada, jadi perlu id tsb perlu dihapus jg di user.bagasi atau user.order
-🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth. 
+    ✅ sdh di fix di nodeschedule Case 1, 2, 3, 4
+🔴 Cek lagi nodeschedule, masih bekerja apa tdk jika pake branch fitur-UserAuth.
+    ✅ Sdh di cek algo nya, sejauh ini bulletproof.
 
 NODESCHEDULE
     FlowBagasi ["Scheduled", "Opened", "Closed", "Unloaded", "Canceled"]
-        'Scheduled' (h-1 tgl brkt --nodeschedule) 'Canceled' (h+30 dateCreated --nodeschedule) 'false'
-        'Scheduled' (uploadTiket --user) 'Ready' (bagasiFull --user dan atau h-1 tgl brkt --nodeschedule) 'Closed' (orderDeliveredAPI --user dan nodescheduleOrder 3 line dibawah ini ) 'Unloaded' (h+30 dateCreated --nodeschedule) 'false'.
+        'Scheduled' (h-1 tgl brkt --nodeschedule daily case 1) 'Canceled' ( --nodeschedule monthly case 5) 'false'
+        'Scheduled' (uploadTiket --user) 'Opened' (bagasiFull --user dan atau h-1 waktuBerangkat --nodeschedule daily case 1) 'Closed' (orderDeliveredAPI --user dan --nodeschedule daily case 2) 'Unloaded' (--nodeschedule monthly case 5) 'false'.
     FlowOrder ["Preparing", "Ready", "Delivered", "Postponed"]
-        'Preparing' (h-1 tgl brkt --nodeschedule) 'Postponed' (h+30 dateCreated --nodeschedule) 'false'
-        'Preparing' (uploadPayment --user) 'Ready' (orderDeliveredAPI --user dan h+5 TglTiba orderDeliveredAPI --nodeschedule) 'Delivered' (h+30 dateCreated --nodeschedule) 'false'.
+        'Preparing' (h-1 tgl brkt --nodeschedule daily case 3) 'Postponed' ( --nodeschedule monthly case 6) 'false'
+        'Preparing' (uploadPayment --user) 'Ready' (orderDeliveredAPI --user dan h+3 waktuTiba Bagasi --nodeschedule daily case 4) 'Delivered' ( --nodeschedule monthly case 6) 'false'.

@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  timeCreated: {
+  tanggalDibuat: {
     type: Date,
-    default: Date.now,
+    default: Date.now(),
   },
   nama: {
     type: String,
