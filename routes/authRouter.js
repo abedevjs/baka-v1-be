@@ -28,6 +28,7 @@ authRouter.get(
 authRouter.route("/facebook").get(authController.authFacebookHandler);
 
 //* callback route for facebook to redirect to www.nama.com/auth/facebook/redirect ATAU http://localhost:27017/auth/facebook/redirect
+//* To get client's email on facebook: https://stackoverflow.com/questions/22880876/passport-facebook-authentication-is-not-providing-email-for-all-facebook-account
 // authRouter.route('/facebook/redirect').get(authController.authFacebookHandlerRedirect);
 authRouter.get(
   "/facebook/redirect",

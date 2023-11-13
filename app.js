@@ -1,6 +1,10 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
+const rateLimit = require("express-rate-limit");
 
 const homeRoutes = require("./routes/homeRouter");
 const bagasiRoutes = require("./routes/bagasiRouter");
@@ -23,7 +27,7 @@ require("./utility/passport-setup")(passport);
 const app = express();
 
 //! Middlewares Security --start
-app.use(express.json({ limit: "10kb" })); //built-in middleware dr express utk membaca dan memproses incoming input data dari body/client
+//CORS
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -31,6 +35,26 @@ app.use(
     credentials: true,
   })
 );
+
+//Helmet helps secure Express apps by setting HTTP response headers.
+app.use(helmet());
+
+//built-in middleware dr express utk membaca dan memproses incoming input data dari body/client
+app.use(express.json({ limit: "10kb" }));
+
+//Express 4.x middleware which sanitizes user-supplied data to prevent MongoDB Operator Injection.
+app.use(mongoSanitize());
+
+//Express middleware to protect against HTTP Parameter Pollution attacks
+app.use(hpp());
+
+// Limit requests API from same IP
+const limiter = rateLimit({
+  limit: 500,
+  windosMs: 1 * 60 * 60 * 1000,
+  message: "Coba lagi setelah 1 jam ya kak",
+});
+app.use(limiter);
 //! Middlewares Security --end
 
 //! Middlewares Operational --start

@@ -25,16 +25,27 @@ module.exports = function (passport) {
         };
 
         try {
+          //todo Check if User is in the Blacklist? reject
+          if (process.env.BLACKLIST_GMAIL.split(" ").includes(newUser.email)) {
+            return done(null, false, {
+              message:
+                "Banned. BTW I cant find how to display this message to the User",
+            });
+          }
+
+          //todo Check if User has already been registered before
           let user = await UserAuth.findOne({ googleID: profile.id });
 
           if (user) {
+            //todo if yes, next
             done(null, user);
           } else {
+            //todo if not yet, create new User
             user = await UserAuth.create(newUser);
             done(null, user);
           }
         } catch (error) {
-          console.error("🔴", error);
+          console.error("🔴 PassportJS Error: ", error);
         }
       }
     )
@@ -48,7 +59,7 @@ module.exports = function (passport) {
         callbackURL: "/auth/facebook/redirect",
       },
       async (access_token, refresh_token, profile, done) => {
-        console.log(profile);
+        // console.log(profile);
         const newUser = {
           nama: profile.displayName,
           facebookID: profile.id,
@@ -56,16 +67,29 @@ module.exports = function (passport) {
         };
 
         try {
+          //todo Check if User is in the Blacklist? reject
+          if (
+            process.env.BLACKLIST_FB_ID.split(" ").includes(newUser.facebookID)
+          ) {
+            return done(null, false, {
+              message:
+                "Banned. BTW I cant find how to display this message to the User",
+            });
+          }
+
+          //todo Check if User has already been registered before
           let user = await UserAuth.findOne({ facebookID: profile.id });
 
           if (user) {
+            //todo if yes, next
             done(null, user);
           } else {
+            //todo if not, create new User
             user = await UserAuth.create(newUser);
             done(null, user);
           }
         } catch (error) {
-          console.error("🔴", error);
+          console.error("🔴 PassportJS Error: ", error);
         }
       }
     )

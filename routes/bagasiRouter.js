@@ -9,7 +9,7 @@ const bagasiRouter = express.Router();
 //* www.nama.com/bagasi
 bagasiRouter
   .route("/")
-  .get(authController.authenticate, bagasiController.getAllBagasi)
+  .get(bagasiController.getAllBagasi)
   .post(authController.authenticate, bagasiController.createBagasi);
 
 //* www.nama.com/bagasi/:id

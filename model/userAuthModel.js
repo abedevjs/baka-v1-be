@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema({
   image: {
     type: String,
   },
+  rekeningNomor: {
+    type: String,
+    default: "",
+  },
+  rekeningBank: {
+    type: String,
+    default: "",
+  },
   dokumen: Array,
   bagasi: [
     //* Child Referencing. One to Few

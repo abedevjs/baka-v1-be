@@ -57,7 +57,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
   if (req.user.bagasi.length >= process.env.MAX_BAGASI_ACTIVE)
     return next(
       new AppError(
-        `Kakak hanya boleh memiliki maks. ${process.env.MAX_BAGASI_ACTIVE} bagasi aktif. Mohon hapus dulu bagasi yang lain`,
+        `Kakak hanya boleh memiliki maks. ${process.env.MAX_BAGASI_ACTIVE} bagasi aktif. Mohon di hapus dulu bagasi yang lain`,
         403
       )
     );

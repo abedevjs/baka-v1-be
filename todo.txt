@@ -166,8 +166,9 @@ USER
     ✅ done
 ❗40. Perbaiki lagi algoritma //todo 4. Check if ordered Bagasi is bigger than the new one, request denied. di updateBagasi
     ✅Algorithma sudah diperbaiki, jd di frontend defaultValue=initialKg tapi input=req.body.availableKg. Sehingga algo nya lbh simpel (silahkan cek updateBagasi)
-❗Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 ❗Don’t forget security Middleware
+    ✅ done
+❓Pastikan updateBagasi dan updateOrder yg id nya tidak ada, tdk masuk dalam UI (table). < tidak ngerti, lupa soal apa ???
 
 BAGASI
 🔴 Update alamatDari only yes to status [Scheduled, Opened]. Update alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
@@ -190,9 +191,13 @@ ORDER
 USER
 🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
     ✅ done
-🔴 User bisa update nama. Lakukan ini jg di frontend
+🔴 User bisa update nama, nomorwa, nomor rekening, nama bank. Lakukan ini jg di frontend
+    ✅ done
 🔴 Get User khusus utk admin utk manipulate data User
-🔴 Bagasi_tax bisa jadi 0% untuk user yang ada perjanjian partnership dgn Baka. Di UserAuth tambahkan property partnership: Boolean.
+    ✅ done utk sementara manipulate data User langsung lewat mongoDB
+🔴 Tambahkan property di User model, partnership: ['Buddy', 'Loyal', 'Frequent', 'Regular'], tiap parntnership menentukan jumlah % tax pada Bagasi
+🔴 Tiap property tsb ditentukan oleh jumlah 'Unloaded', less 'Canceled' / complain from other User, frekuensi jual bagasi dlm wkt tertentu, dll
+🔴 Buat property 'suksesBagasi' dan 'suksesOrder' yg di increment +1 jika bagasi User 'UnLoaded' atau order User 'Delivered'.
 
 UPLOAD
 🔴 Klo user.dokumen sdh ada dokumen dan bagasi.dokumen jg sdh ada dokumen, bagaimana solusinya di admin/status-bagasi/:id?
@@ -206,7 +211,7 @@ ADMIN
 🔴 Buat model untuk dokumen, setiap user upload dokumen, masuk ke database dokumen. Admin mudah cek di database dokumen terbaru yang di upload, agar selanjutnya bisa di aktifkan
     ✅ done
 🔴 Get User khusus utk admin utk manipulate data User
-🔴 Jika Baka sudah jalan, sdh dapat feedback, minta saran dengan fitur baru JASTIP pada customer
+🔴❓ Jika Baka sudah jalan, sdh dapat feedback, minta saran dengan fitur baru JASTIP pada customer
 
 USUL ADDOL
 🔴 Pada model Bagasi, tambahkan alamat kotaDari dan alamat kotaTujuan. Telpon dan alamat akan ter ekspos setelah payment valid / order.status = 'Ready'
@@ -233,7 +238,11 @@ USUL ADDOL
 NODESCHEDULE
     FlowBagasi ["Scheduled", "Opened", "Closed", "Unloaded", "Canceled"]
         'Scheduled' (h-1 tgl brkt --nodeschedule daily case 1) 'Canceled' ( --nodeschedule monthly case 5) 'false'
+            ✅ done
         'Scheduled' (uploadTiket --user) 'Opened' (bagasiFull --user dan atau h-1 waktuBerangkat --nodeschedule daily case 1) 'Closed' (orderDeliveredAPI --user dan --nodeschedule daily case 2) 'Unloaded' (--nodeschedule monthly case 5) 'false'.
+            ✅ done
     FlowOrder ["Preparing", "Ready", "Delivered", "Postponed"]
         'Preparing' (h-1 tgl brkt --nodeschedule daily case 3) 'Postponed' ( --nodeschedule monthly case 6) 'false'
+            ✅ done
         'Preparing' (uploadPayment --user) 'Ready' (orderDeliveredAPI --user dan h+3 waktuTiba Bagasi --nodeschedule daily case 4) 'Delivered' ( --nodeschedule monthly case 6) 'false'.
+            ✅ done

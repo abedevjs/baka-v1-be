@@ -55,7 +55,10 @@ exports.update = catchAsync(async (req, res, next) => {
   const updatedUser = await UserAuth.findByIdAndUpdate(
     req.user.id,
     {
+      nama: req.body.nama,
       telpon: req.body.telpon,
+      rekeningNomor: req.body.rekeningNomor,
+      rekeningBank: req.body.rekeningBank,
     },
     {
       new: true,
@@ -91,8 +94,10 @@ exports.hapus = catchAsync(async (req, res, next) => {
       })
     );
 
+    //Check if Array is not empty because: ATTENTION! ARRAY.some() always returns false for empty arrays
+    //* https://humanwhocodes.com/blog/2023/09/javascript-wtf-why-does-every-return-true-for-empty-array/
     //Cek jika dalam array isBookedKg ada salah satu elemen yang > 0 maka pasti bagasi tersebut sdh ready dan terbooking, jd ga bisa di delete
-    if (isBookedKg.some((el) => el > 0))
+    if (isBookedKg.length > 0 && isBookedKg.some((el) => el > 0))
       return next(
         new AppError(
           "Kakak masih memiliki Bagasi aktif. Permohonan ditolak untuk sementara"
@@ -115,6 +120,7 @@ exports.hapus = catchAsync(async (req, res, next) => {
       })
     );
 
+    //Disini sudah pasti array nya tdk kosong maka tdk perlu di cek empty atau tdk sebelum perform Array.some()
     //Cek jika dalam array orderStatus ada salah satu elemen yg status nya 'Ready', ga bisa di delete
     if (orderStatus.some((el) => el == "Ready")) {
       return next(
