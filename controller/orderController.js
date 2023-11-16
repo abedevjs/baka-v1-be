@@ -113,33 +113,35 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
-  const user = await UserAuth.findById(req.user.id);
+  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error. --start
+  //* Code lines dibawah ini sudah dihapus karena calling update user.telpon sudah di handle di front end sama seperti di bagasiCreate.
+  // const user = await UserAuth.findById(req.user.id);
 
-  if (!user.telpon) {
-    const addTelponToUser = await UserAuth.findByIdAndUpdate(
-      user,
-      {
-        telpon: req.body.telpon,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+  // if (!user.telpon) {
+  //   const addTelponToUser = await UserAuth.findByIdAndUpdate(
+  //     user,
+  //     {
+  //       telpon: req.body.telpon,
+  //     },
+  //     {
+  //       new: true,
+  //       runValidators: true,
+  //     }
+  //   );
 
-    if (!addTelponToUser.telpon)
-      return next(
-        new AppError(
-          "Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢",
-          400
-        )
-      );
-    if (!addTelponToUser)
-      return next(
-        new AppError("Kesalahan dalam menambahkan nomor telpon Kakak 😢", 400)
-      );
-  }
+  //   if (!addTelponToUser.telpon)
+  //     return next(
+  //       new AppError(
+  //         "Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢",
+  //         400
+  //       )
+  //     );
+  //   if (!addTelponToUser)
+  //     return next(
+  //       new AppError("Kesalahan dalam menambahkan nomor telpon Kakak 😢", 400)
+  //     );
+  // }
+  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error. --end
 
   //todo 9. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
   const totalBiayaRp = Number(req.body.jumlahKg) * bagId.hargaRp;
@@ -155,8 +157,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     adminFeeRp: totalAdminFeeRp,
     netRp: totalNetRp,
     catatan: req.body.catatan,
-    owner: await UserAuth.findById(req.user.id), //* Embedding
-    bagasi: { _id: req.params.bagasiId }, //* Referencing
+    owner: await UserAuth.findById(req.user.id), //* Embedding. The reason i  remain choosing Embedding is, we rarely/never need digging User data via this document.
+    bagasi: { _id: req.params.bagasiId }, //* Referencing. The reason i switched to Referencing rather than Embedding is when the Bagasi is updated, this document is not  being updated as well.
     // bagasi: await Bagasi.findById(bagId), //* Embedding
   });
 

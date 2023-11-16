@@ -37,7 +37,8 @@ exports.getAllBagasi = catchAsync(async (req, res, next) => {
 exports.getOneBagasi = catchAsync(async (req, res, next) => {
   const bagasi = await Bagasi.findById(req.params.id).populate({
     path: "order",
-    select: "-tanggalDibuat -isi -biayaRp -owner -bagasi -__v",
+    // select: "-tanggalDibuat -isi -biayaRp -owner -bagasi -__v",
+    select: "-tanggalDibuat -bagasi -__v",
   });
 
   if (!bagasi)
@@ -63,7 +64,7 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     );
 
   //todo 3. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error. --start
-  //* Code lines dibawah ini sudah dihapus karena calling update user.telpon sudah di handle di front end
+  //* Code lines dibawah ini sudah dihapus karena calling update user.telpon sudah di handle di front end, sama seperti di orderCreate.
   // const user = await UserAuth.findById(req.user.id);
 
   // if (!user.telpon) {
@@ -122,12 +123,12 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
 });
 
 exports.updateBagasi = catchAsync(async (req, res, next) => {
-  //todo 2. Check Bagasi
+  //todo 1. Check Bagasi
   const bagasi = await Bagasi.findById(req.params.id);
   if (!bagasi)
     return next(new AppError("Bagasi yang kakak minta tidak tersedia 😢", 404));
 
-  //todo 3. Check Owner.
+  //todo 2. Check Owner.
   if (bagasi.owner._id.toString() !== req.user.id)
     return next(
       new AppError(
@@ -136,19 +137,34 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 3. Jika user update alamatDari, maka alamatDari only yes to status [Scheduled, Opened]
+  //todo 3. Jika User update TglBerangkat, Tgl Tiba, kategori tersebut only yes to status [Scheduled].
+  if (
+    !(
+      req.body.waktuBerangkat !== bagasi.waktuBerangkat ||
+      req.body.waktuTiba !== bagasi.waktuTiba
+    ) &&
+    ["Scheduled"].includes(bagasi.status)
+  )
+    return next(
+      new AppError(
+        "Tanggal (berangkat-tiba) hanya bisa di update jika status bagasi masih 'Scheduled' ya kak",
+        403
+      )
+    );
+
+  //todo 4. Jika user update alamatDari, maka alamatDari only yes to status [Scheduled, Opened]
   if (
     req.body.alamatDari !== bagasi.alamatDari &&
     ["Closed", "Unloaded", "Canceled"].includes(bagasi.status)
   )
     return next(
       new AppError(
-        "Alamat Kota Asal hanya bisa di update jika status bagasi masih 'Scheduled' dan 'Opened' sj kk",
+        "Alamat Kota Asal hanya bisa di update jika status bagasi masih 'Scheduled' dan 'Opened' ya kak",
         403
       )
     );
 
-  //todo Jika user update alamatTujuan maka alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
+  //todo 5. Jika user update alamatTujuan maka alamatTujuan only yes to status [Scheduled, Opened, Closed, UnLoaded]
   if (
     req.body.alamatTujuan !== bagasi.alamatTujuan &&
     bagasi.status == "Canceled"
@@ -186,6 +202,8 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
       waktuTiba: req.body.waktuTiba,
       availableKg: req.body.availableKg,
       hargaRp: req.body.hargaRp,
+      alamatDari: req.body.alamatDari,
+      alamatTujuan: req.body.alamatTujuan,
       catatan: req.body.catatan,
     },
     {

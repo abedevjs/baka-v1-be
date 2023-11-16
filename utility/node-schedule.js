@@ -142,17 +142,17 @@ const setOrderPreparingToPostponed = async () => {
     if (!ordersPreparing) return;
 
     //todo 2. Menambahkan waktuBerangkat ke dlm ordersPreparing dari Bagasi reference Order tsb
-    const ordersWithWaktuBerangkat = await Promise.all(
-      ordersPreparing.map(async (order) => ({
-        ...order,
-        waktuBerangkat: (
-          await Bagasi.findById(order.bagasi._id)
-        ).waktuBerangkat,
-      }))
-    );
+    // const ordersWithWaktuBerangkat = await Promise.all(
+    //   ordersPreparing.map(async (order) => ({
+    //     ...order,
+    //     waktuBerangkat: (
+    //       await Bagasi.findById(order.bagasi._id)
+    //     ).waktuBerangkat,
+    //   }))
+    // );
 
     //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours)
-    let filterOrders = ordersWithWaktuBerangkat.filter(
+    let filterOrders = ordersPreparing.filter(
       (order) => today.getTime() >= order.waktuBerangkat.getTime() - 90000000
     );
     if (filterOrders.length == 0) return;
@@ -206,15 +206,15 @@ const setOrderReadyToDelivered = async () => {
     if (!ordersReady) return;
 
     //todo 2. Menambahkan waktuTiba ke dlm ordersDelivered dari Bagasi reference Order tsb
-    const ordersWithWaktuTiba = await Promise.all(
-      ordersReady.map(async (order) => ({
-        ...order,
-        waktuTiba: (await Bagasi.findById(order.bagasi._id)).waktuTiba,
-      }))
-    );
+    // const ordersWithWaktuTiba = await Promise.all(
+    //   ordersReady.map(async (order) => ({
+    //     ...order,
+    //     waktuTiba: (await Bagasi.findById(order.bagasi._id)).waktuTiba,
+    //   }))
+    // );
 
     //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuTiba Bagasi (h+3)
-    const filterOrders = ordersWithWaktuTiba.filter(
+    const filterOrders = ordersReady.filter(
       (order) => today.getTime() >= order.waktuTiba.getTime() + 259200000
     );
     if (filterOrders.length == 0) return;

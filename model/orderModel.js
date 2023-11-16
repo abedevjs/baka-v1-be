@@ -8,6 +8,22 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
+  dari: {
+    type: String,
+    default: "",
+  },
+  tujuan: {
+    type: String,
+    default: "",
+  },
+  waktuBerangkat: {
+    // YYYY-MM-DD
+    type: Date,
+  },
+  waktuTiba: {
+    // YYYY-MM-DD
+    type: Date,
+  },
   jumlahKg: {
     type: Number,
     required: [true, "Berapa jumlahKg bagasi yg ingin Kakak beli?"],
@@ -58,13 +74,25 @@ const orderSchema = new mongoose.Schema({
     select: true,
     default: true,
   },
-  owner: Object, //* Embedded. One to One. An Order only have one Owner/User
-  bagasi: Object, //* Embedded. One to One. An Order only belong to one Bagasi
+  owner: Object, //* Embedded. One to One. An Order only have one Owner/User. We insert/create the UserModel/object to this property via orderController.createOrder
+  bagasi: Object, //* Embedded. One to One. An Order only belong to one Bagasi. We insert/create the UserModel/object to this property via orderController.createOrder
 });
 
 //! Document Middleware --start
+//* Insert dari, tujuan, waktuBerangkat, waktuTiba to Order
+orderSchema.pre("save", async function (next) {
+  const currentBagasi = await Bagasi.findById(this.bagasi._id);
+
+  (this.dari = currentBagasi.dari),
+    (this.tujuan = currentBagasi.tujuan),
+    (this.waktuBerangkat = currentBagasi.waktuBerangkat),
+    (this.waktuTiba = currentBagasi.waktuTiba);
+
+  next();
+});
+
+//* Referencing orderId and orderBagasiId to User.order and User.orderBagasiId
 orderSchema.post("save", async function () {
-  //* Referencing orderId and orderBagasiId to User.order and User.orderBagasiId
   const ownerId = this.owner._id;
   // const bagasiId = this.bagasi._id;
 

@@ -37,9 +37,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  dokumen: Array,
+  dokumen: Array, //* We push documentNames into this array via uploadController.updateUploadDokumen
   bagasi: [
     //* Child Referencing. One to Few
+    //* We push bagasiIDs into this array via BagasiModel pre save document middleware
     {
       type: mongoose.Schema.ObjectId,
       ref: "Bagasi",
@@ -47,12 +48,13 @@ const userSchema = new mongoose.Schema({
   ],
   order: [
     //* Child Referencing. One to Few
+    //* We push orderIDs into this array via OrderModel post save document middleware
     {
       type: mongoose.Schema.ObjectId,
       ref: "Order",
     },
   ],
-  orderBagasiId: Array,
+  orderBagasiId: Array, //* We push orderIDs into this array via OrderModel post save document middleware
   active: {
     type: Boolean,
     // select: true,

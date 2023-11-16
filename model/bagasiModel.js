@@ -92,6 +92,7 @@ const bagasiSchema = new mongoose.Schema({
     // required: [true, 'Sertakan nama pesawat yang ditumpangi']
   },
   dokumen: {
+    //* We insert/create the document name in this property via adminController.updateBagasiStatus
     //Upload bukti keberangkatan
     type: String,
     default: "",
@@ -117,9 +118,10 @@ const bagasiSchema = new mongoose.Schema({
     select: true,
     default: true,
   },
-  owner: Object, //* Embedded. One to One. A bagasi has only one Owner/User
+  owner: Object, //* Embedded. One to One. A bagasi has only one Owner/User. We insert the userModel/Obj in this property via bagasiController.createBagasi
   order: [
     //* Child Referencing. One to Few. A bagasi can be ordered mulitple times
+    //* We push orderID into this array in the adminController.activateOrder
     {
       type: mongoose.Schema.ObjectId,
       ref: "Order",
