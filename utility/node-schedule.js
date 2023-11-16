@@ -9,7 +9,8 @@ const today = new Date();
 //* CASE 1. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', Bagasi 'Opened' to 'Closed' pull id from User, daily
 //* CASE 2. Bagasi 'Closed' to 'Unloaded', pull id from User, daily
 //! ORDER Case
-//* CASE 3. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
 //* CASE 4. h+3 waktuTiba Bagasi, Order 'Ready' to 'Delivered', pull id from User, daily
 //* CASE 5. Bagasi 'Unloaded dan Bagasi 'Canceled', active true ke active false, not pull id, monthly
 //* CASE 6. Order 'Delivered' dan Order 'Postponed', active true ke active false, not pull id, monthly
@@ -134,26 +135,24 @@ const setBagasiClosedToUnloaded = async () => {
 };
 
 //! Execute Daily
-//* CASE 3. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
-const setOrderPreparingToPostponed = async () => {
+//* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+const setFullOrderPreparingToPostponed = async () => {
   try {
     //todo 1. Find Order 'Preparing'
     const ordersPreparing = await Order.find({ status: "Preparing" });
     if (!ordersPreparing) return;
 
-    //todo 2. Menambahkan waktuBerangkat ke dlm ordersPreparing dari Bagasi reference Order tsb
-    // const ordersWithWaktuBerangkat = await Promise.all(
-    //   ordersPreparing.map(async (order) => ({
-    //     ...order,
-    //     waktuBerangkat: (
-    //       await Bagasi.findById(order.bagasi._id)
-    //     ).waktuBerangkat,
-    //   }))
-    // );
+    //todo 2. Menambahkan statusBagasi ke dlm ordersPreparing dari Bagasi reference Order tsb
+    const ordersWithStatusBagasi = await Promise.all(
+      ordersPreparing.map(async (order) => ({
+        ...order,
+        statusBagasi: (await Bagasi.findById(order.bagasi._id)).status,
+      }))
+    );
 
-    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours)
-    let filterOrders = ordersPreparing.filter(
-      (order) => today.getTime() >= order.waktuBerangkat.getTime() - 90000000
+    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, ambil Bagasi.status closed
+    let filterOrders = ordersWithStatusBagasi.filter(
+      (order) => order.statusBagasi == "Closed"
     );
     if (filterOrders.length == 0) return;
 
@@ -162,6 +161,7 @@ const setOrderPreparingToPostponed = async () => {
       filterOrders.map(
         async (order) =>
           await Order.findByIdAndUpdate(
+            //Perhatikan ini nama id nya ada .doc._id krn document mongo kita manipulate di todo 2, jd struktur document nya otomatis berubah, tdk sama lg dgn struktur dokumen mongo yg biasanya.
             order._doc._id,
             {
               status: "Postponed",
@@ -170,7 +170,6 @@ const setOrderPreparingToPostponed = async () => {
           )
       )
     );
-
     if (!setPreparingToPostponed) return;
 
     //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order
@@ -186,11 +185,62 @@ const setOrderPreparingToPostponed = async () => {
           )
       )
     );
-
     if (!removeOrderID) return;
 
     console.log(
-      `successfully executing nodeSchedule: setOrderPreparingToPostponed, at: ${new Date()}`
+      `successfully executing nodeSchedule: setFullOrderPreparingToPostponed, at: ${new Date()}`
+    );
+  } catch (error) {
+    console.log(err);
+  }
+};
+
+//! Execute Daily
+//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
+const setLateOrderPreparingToPostponed = async () => {
+  try {
+    //todo 1. Find Order 'Preparing'
+    const ordersPreparing = await Order.find({ status: "Preparing" });
+    if (!ordersPreparing) return;
+
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours)
+    let filterOrders = ordersPreparing.filter(
+      (order) => today.getTime() >= order.waktuBerangkat.getTime() - 90000000
+    );
+    if (filterOrders.length == 0) return;
+
+    //todo 3. Yg lolos dari todo 2, ganti status dari 'Preparing' ke 'Postponed'
+    const setPreparingToPostponed = await Promise.all(
+      filterOrders.map(
+        async (order) =>
+          await Order.findByIdAndUpdate(
+            order._doc._id,
+            {
+              status: "Postponed",
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!setPreparingToPostponed) return;
+
+    //todo 4. Yg lolos dari todo 3, orderId nya di pull dr UserAuth.order
+    const removeOrderID = await Promise.all(
+      setPreparingToPostponed.map(
+        async (order) =>
+          await UserAuth.findByIdAndUpdate(
+            order.owner._id,
+            {
+              $pull: { order: { $in: [order._id] } },
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!removeOrderID) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setLateOrderPreparingToPostponed, at: ${new Date()}`
     );
   } catch (err) {
     console.log(err);
@@ -224,6 +274,7 @@ const setOrderReadyToDelivered = async () => {
       filterOrders.map(
         async (order) =>
           await Order.findByIdAndUpdate(
+            //Perhatikan ini nama id nya ada .doc._id krn document mongo kita manipulate di todo 2, jd struktur document nya otomatis berubah, tdk sama lg dgn struktur dokumen mongo yg biasanya.
             order._doc._id,
             { status: "Delivered" },
             { new: true }
@@ -339,7 +390,8 @@ const jobDaily = () => {
   schedule.scheduleJob("0 0 * * *", function () {
     setBagasiStatus();
     setBagasiClosedToUnloaded();
-    setOrderPreparingToPostponed();
+    setFullOrderPreparingToPostponed();
+    setLateOrderPreparingToPostponed();
     setOrderReadyToDelivered();
   });
 };

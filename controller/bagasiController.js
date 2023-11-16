@@ -211,6 +211,13 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
       runValidators: true,
     }
   );
+  if (!updatedBagasi)
+    return next(
+      new AppError(
+        "Terdapat kesalahan sistem dalam proses update data bagasi. Hubungi Admin",
+        400
+      )
+    );
 
   //todo 7. Update the quantities (InitialKg, availableKg) inside the updatedBagasi
   // console.log('🙃', `availableKg: ${Math.abs((bagasi.bookedKg - req.body.availableKg))}, InitialKg: ${bagasi.bookedKg + Math.abs((bagasi.bookedKg - req.body.availableKg))}`);
@@ -227,10 +234,32 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     }
   );
 
-  if (!updatedBagasi || !updateIncrement)
+  if (!updateIncrement)
     return next(
-      new AppError("Terjadi kesalahan dalam proses update bagasi Kakak 😢", 400)
+      new AppError(
+        "Terdapat kesalahan sistem dalam proses update increment bagasi. Hubungi Admin",
+        400
+      )
     );
+
+  //todo 8. Update bagasi.status ke 'Closed' jika bagasi available = 0
+  if (updateIncrement.availableKg == 0) {
+    const updateStatus = await Bagasi.findByIdAndUpdate(
+      updateIncrement,
+      {
+        status: "Closed",
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updateStatus)
+      return next(
+        new AppError(
+          "Terdapat kesalahan sistem dalam proses update status bagasi. Hubungi Admin",
+          400
+        )
+      );
+  }
 
   res.status(200).json({
     status: "Success",

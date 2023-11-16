@@ -194,6 +194,14 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
       new AppError("Kakak bukan pemilik order ini. Akses di tolak ya Kak", 401)
     );
 
+  //todo 5. Check Bagasi.status. Hanya boleh update jika (status: 'Opened')
+  if (bagasi.status !== "Opened")
+    return next(
+      new AppError(
+        `Status Bagasi ${bagasi.status}. Maaf ya kak update di tolak.`
+      )
+    );
+
   //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing').
   // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
   if (order.status !== "Preparing")

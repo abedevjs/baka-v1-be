@@ -179,6 +179,7 @@ BAGASI
     ✅ bagasi.status === 'Canceled' jika hingga di hari waktuBerangkat status bagasi masih 'Scheduled', dan ya diatur nodeschedule case 1
 🔴❓ Guard clause di bagasiUpdate terlalu strict perlu di sync dgn FE react?
 🔴 Bagasi_tax bisa jadi 0% untuk user yang ada perjanjian partnership dgn Baka. Di UserAuth tambahkan property partnership: Boolean.
+🔴❓ Jika Bagasi status 'Closed' bisakah untuk update harga lagi?
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
@@ -187,6 +188,8 @@ ORDER
     ✅ order.status === 'Postponed' jika order.status == 'Preparing' hingga bagasi status nya 'Closed', dan ya diatur nodeschedule case 3
 🔴❓ Perlu di pertimbangkan User hanya bisa order max 2 kali di Bagasi yg sama. Meskipun 2 Order tsb status == 'Ready'. Karena di deleteOrder, algo kita hanya bisa delete 1id dari Order.orderBagasiId arr?
     ✅ Sdh di cek algo nya, sejauh ini bulletproof.
+🔴❓ Bgmn handle order preparing yang bagasinya sudah closed, tapi jauh sebelum h-1 waktuBerangkat. Akankah dy dibiarkan Postponed terus?
+    ✅ done, sdh di handle nodeschedule
 
 USER
 🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)
@@ -242,7 +245,7 @@ NODESCHEDULE
         'Scheduled' (uploadTiket --user) 'Opened' (bagasiFull --user dan atau h-1 waktuBerangkat --nodeschedule daily case 1) 'Closed' (orderDeliveredAPI --user dan --nodeschedule daily case 2) 'Unloaded' (--nodeschedule monthly case 5) 'false'.
             ✅ done
     FlowOrder ["Preparing", "Ready", "Delivered", "Postponed"]
-        'Preparing' (h-1 tgl brkt --nodeschedule daily case 3) 'Postponed' ( --nodeschedule monthly case 6) 'false'
+        'Preparing' (Bagasi full --nodeschedule daily case 3a, h-1 tgl brkt --nodeschedule daily case 3b) 'Postponed' ( --nodeschedule monthly case 6) 'false'
             ✅ done
         'Preparing' (uploadPayment --user) 'Ready' (orderDeliveredAPI --user dan h+3 waktuTiba Bagasi --nodeschedule daily case 4) 'Delivered' ( --nodeschedule monthly case 6) 'false'.
             ✅ done
