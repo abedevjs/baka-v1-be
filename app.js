@@ -70,7 +70,7 @@ if (process.env.NODE_ENV === "development") app.use(morgan("dev")); //3rd party 
 //! Session Middlewares --start
 app.use(
   session({
-    secret: "keyboard cat",
+    secret: process.env.SESSION_SECRET,
     resave: false, //we dont want to save a session if nothing is modified
     saveUninitialized: false, //dont create a session until something is stored
     cookie: {
