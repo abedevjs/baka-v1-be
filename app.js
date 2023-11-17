@@ -26,6 +26,11 @@ require("./utility/passport-setup")(passport);
 
 const app = express();
 
+const updateNotifier = require("simple-update-notifier");
+const packageJson = require("./package.json", { type: "json" });
+
+updateNotifier({ pkg: packageJson });
+
 //! Middlewares Security --start
 //CORS
 app.use(
