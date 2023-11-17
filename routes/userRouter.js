@@ -27,17 +27,21 @@ userRouter
 userRouter.route("/keluar").get(authController.protect, authController.keluar);
 
 //* www.nama.com/user/all
-userRouter.route("/all").get(authController.protect, userController.all);
+userRouter.route("/all").get(authController.authenticate, userController.all);
 
 //* www.nama.com/user/update
 userRouter
   .route("/update")
-  .patch(authController.protect, userController.update);
+  .patch(authController.authenticate, userController.update);
 
 //* www.nama.com/user/profil
-userRouter.route("/profil").get(authController.protect, userController.profil);
+userRouter
+  .route("/profil")
+  .get(authController.authenticate, userController.profil);
 
 //* www.nama.com/user/hapus
-userRouter.route("/hapus").delete(authController.protect, userController.hapus);
+userRouter
+  .route("/hapus")
+  .delete(authController.authenticate, userController.hapus);
 
 module.exports = userRouter;

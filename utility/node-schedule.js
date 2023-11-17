@@ -1,174 +1,417 @@
-const schedule = require('node-schedule');
-const Bagasi =require('../model/bagasiModel');
-const Order = require('../model/orderModel');
+const schedule = require("node-schedule");
+const Bagasi = require("../model/bagasiModel");
+const Order = require("../model/orderModel");
+const UserAuth = require("../model/userAuthModel");
 
-const catchAsync = require('./catchAsync');
-const AppError = require('./appError');
+const today = new Date();
 
-const now = new Date();
-const date = now.getDate();
-const month = now.getMonth() + 1;
-const year = now.getFullYear();
-// console.log(now.getTime() < bagasi.waktuBerangkat);
+//! BAGASI Case
+//* CASE 1. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', Bagasi 'Opened' to 'Closed' pull id from User, daily
+//* CASE 2. Bagasi 'Closed' to 'Unloaded', pull id from User, daily
+//! ORDER Case
+//* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 4. h+3 waktuTiba Bagasi, Order 'Ready' to 'Delivered', pull id from User, daily
+//* CASE 5. Bagasi 'Unloaded dan Bagasi 'Canceled', active true ke active false, not pull id, monthly
+//* CASE 6. Order 'Delivered' dan Order 'Postponed', active true ke active false, not pull id, monthly
 
-const status = async (Model, str0, str1, str2) => {
+//! Execute Daily
+//* CASE 1. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', Bagasi 'Opened' to 'Closed' pull id from User, daily
+const setBagasiStatus = async () => {
+  try {
+    //todo 1. Find Bagasi 'Scheduled' dan Bagasi 'Opened'
+    const statusScheduledAndOpened = await Bagasi.find({
+      $or: [{ status: "Scheduled" }, { status: "Opened" }],
+    });
 
-    //todo Menentukan patokan. Tanggal hari ini
-    const time = new Date();
-    const today = time.getTime();
-    // console.log(today);//1688278309425 = timestamp
-    // console.log(new Date(today)); //2023-07-02T06:12:01.690Z
-    // console.log(time.toISOString()); //2023-07-02T06:13:24.395Z
-    // console.log(Date.now());// 1688278481239 = timestamp
-    // console.log(today > new Date('2023-07-03T00:00:00.000+00:00'));
-    // const ini = new Date('2023-04-01T00:00:00.000+00:00').getTime() + 86400000;
-    // const itu = new Date('2023-04-03T00:00:00.000+00:00').getTime() + -86400000;
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 25hours)
+    const bagasiDeadline = statusScheduledAndOpened.filter(
+      (bagasi) => today.getTime() >= bagasi.waktuBerangkat.getTime() - 90000000
+    );
 
+    //todo 3. Yg lolos dari todo 2, ganti status 'Scheduled' to 'Canceled' dan 'Opened' to 'Closed'.
+    const setBagasiStatus = await Promise.all(
+      bagasiDeadline.map(
+        async (bagasi) =>
+          await Bagasi.findByIdAndUpdate(
+            bagasi._id,
+            {
+              status:
+                bagasi.status == "Scheduled"
+                  ? "Canceled"
+                  : bagasi.status == "Opened"
+                  ? "Closed"
+                  : "",
+            },
+            { new: true }
+          )
+      )
+    );
 
-    //todo Scan Model.status, value nya dlm bentuk [] Array Literal. jika tdk ada return;
-    const [query] = await Model.find({status: str1});
-    // console.log('🫠', typeof(query));
-    // console.log(Array.isArray(query));
-    // console.log();
-    // console.log(query == []);
-    if(!query) return;
+    if (!setBagasiStatus) return;
 
-    //todo Scan lagi, kali ini valuenya dlm bentuk {}.
-    const modelStatus = await Model.find({status: str1});
-    // console.log('🤣', typeof(modelStatus));
-    // const ty = modelStatus.map(el => console.log(new Date(el.waktuTiba.getTime() + (86400000 * 2))));
-    // const xx = modelStatus.map(el => console.log(new Date(el.waktuTiba.getTime() + 86400000)));
-    // console.log(today > xx);
+    //todo 4. Yg lolos dari todo 3, bagasiId nya di pull dr UserAuth.bagasi
+    const removeBagasiID = await Promise.all(
+      setBagasiStatus.map(
+        async (bagasi) =>
+          await UserAuth.findByIdAndUpdate(
+            bagasi.owner._id,
+            {
+              $pull: { bagasi: { $in: [bagasi._id] } },
+            },
+            { new: true, runValidators: true }
+          )
+      )
+    );
 
-    //todo Memberikan value H+1 atau H-1
-    let num = str0 == '+1' ? 86400000 : -86400000;
+    if (!removeBagasiID) return;
 
-    //todo Menentukan variabel perbandinggan menggunakan 'waktuTiba' atau 'waktuBerangkat'
-    let wkt = str1 == 'Ready' ? 'waktuTiba' : 'waktuBerangkat';
-
-    //todo Jika parameter(Model == Order)
-    let timm = [];
-    if(Model == Order) {
-        await Promise.all(modelStatus.map( async el => {
-            const ids = el.bagasi._id;
-            const time =  await Bagasi.findById(ids);
-            return str1 == 'Ready' ? timm.push(new Date(time.waktuTiba.getTime() + num)) : timm.push(new Date(time.waktuBerangkat.getTime() + num));
-    
-        }));
-    };
-
-    //todo Jika parameter(Model == Bagasi)
-    let ular = Model == Bagasi ? modelStatus.map(el => new Date(el[wkt].getTime() + num)) : timm;
-    // console.log(ular);
-    // console.log(modelStatus.map(el => el.waktuBerangkat))
-    // console.log(new Date(today));
-    // console.log(modelStatus.map(el => new Date(el.waktuBerangkat.getTime() + num)));
-
-    //todo Reassign value ke array utk di compare
-    const [statusDate] = ular;
-    // console.log(new Date(today).toDateString());
-    // console.log(statusDate.toDateString());
-    // console.log(new Date(today).toDateString() == statusDate.toDateString());
-    
-
-    //todo Membandingkan tanggal hari ini dan tanggal keberangkatan/tiba
-    if(new Date(today).toDateString() == statusDate.toDateString()) {
-        modelStatus.map(async el => {
-            const ese = await Model.findByIdAndUpdate(el.id, {
-                status: str2
-            }, {
-                new: true,
-                runValidators: true
-            });
-            if(!ese) return;
-    
-        });
-    };
+    console.log(
+      `successfully executing nodeSchedule: setBagasiStatus, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
 };
 
+//! Execute Daily
+//* CASE 2. Bagasi 'Closed' to 'Unloaded', pull id from User, daily
+const setBagasiClosedToUnloaded = async () => {
+  try {
+    //todo 1. Find Bagasi 'Closed'
+    const bagasisClosed = await Bagasi.find({ status: "Closed" });
 
+    //todo 2. Membuat property baru dalam Bagasi yaitu array orderStatus: ['Ready', 'Delivered', 'Ready']
+    const bagasiWithOrdersStatus = await Promise.all(
+      bagasisClosed.map(async (bagasi) => ({
+        ...bagasi,
+        orderStatus: await Promise.all(
+          bagasi.order.map(async (id) => (await Order.findById(id)).status)
+        ),
+      }))
+    );
 
-//! Execute ONCE A WEEK
-//* Mengubah Bagasi.status = Closed dan Canceled ke Bagasi.active = false
-//* Mengubah Order.status = Delivered dan Canceled ke Order.active = false
+    //todo 3. Hasil dari todo 2, filter tiap bagasi yg di dlm filter tsb orderStatus dari Bagasi tsb semuanya 'Delivered'
+    const filterBagasis = bagasiWithOrdersStatus.filter((bagasi) =>
+      bagasi.orderStatus.every((status) => status == "Delivered")
+    );
+    if (filterBagasis.length == 0) return;
 
-const changeActive = catchAsync(async() => {
-    //! UNTUK BAGASI MODEL
-    //todo scan Bagasi.status yg Closed dan Canceled. 
-    const statusCloseCancel = await Bagasi.find({
-        $or: [{status: 'Closed'}, {status: 'Canceled'}]
+    //todo 4. if all the orderStatus are 'Delivered', change Bagasi.status to 'Unloaded'
+    const setClosedToUnloaded = await Promise.all(
+      filterBagasis.map(
+        async (bagasi) =>
+          await Bagasi.findByIdAndUpdate(
+            bagasi._doc._id,
+            { status: "Unloaded" },
+            { new: true }
+          )
+      )
+    );
+    setClosedToUnloaded.map((bagasi) => console.log(bagasi._id, bagasi.status));
+    if (!setClosedToUnloaded) return;
+
+    //todo 5. if all the orderStatus are 'Delivered', remove the bagasiID from Owner.bagasi
+    const removeBagasiID = await Promise.all(
+      setClosedToUnloaded.map(
+        async (bagasi) =>
+          await UserAuth.findByIdAndUpdate(
+            bagasi.owner._id,
+            {
+              $pull: { bagasi: { $in: [bagasi._id] } },
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!removeBagasiID) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setBagasiClosedToUnloaded, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//! Execute Daily
+//* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+const setFullOrderPreparingToPostponed = async () => {
+  try {
+    //todo 1. Find Order 'Preparing'
+    const ordersPreparing = await Order.find({ status: "Preparing" });
+    if (!ordersPreparing) return;
+
+    //todo 2. Menambahkan statusBagasi ke dlm ordersPreparing dari Bagasi reference Order tsb
+    const ordersWithStatusBagasi = await Promise.all(
+      ordersPreparing.map(async (order) => ({
+        ...order,
+        statusBagasi: (await Bagasi.findById(order.bagasi._id)).status,
+      }))
+    );
+
+    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, ambil Bagasi.status closed
+    let filterOrders = ordersWithStatusBagasi.filter(
+      (order) => order.statusBagasi == "Closed"
+    );
+    if (filterOrders.length == 0) return;
+
+    //todo 4. Yg lolos dari todo 3, ganti status dari 'Preparing' ke 'Postponed'
+    const setPreparingToPostponed = await Promise.all(
+      filterOrders.map(
+        async (order) =>
+          await Order.findByIdAndUpdate(
+            //Perhatikan ini nama id nya ada .doc._id krn document mongo kita manipulate di todo 2, jd struktur document nya otomatis berubah, tdk sama lg dgn struktur dokumen mongo yg biasanya.
+            order._doc._id,
+            {
+              status: "Postponed",
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!setPreparingToPostponed) return;
+
+    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order
+    const removeOrderID = await Promise.all(
+      setPreparingToPostponed.map(
+        async (order) =>
+          await UserAuth.findByIdAndUpdate(
+            order.owner._id,
+            {
+              $pull: { order: { $in: [order._id] } },
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!removeOrderID) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setFullOrderPreparingToPostponed, at: ${new Date()}`
+    );
+  } catch (error) {
+    console.log(err);
+  }
+};
+
+//! Execute Daily
+//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
+const setLateOrderPreparingToPostponed = async () => {
+  try {
+    //todo 1. Find Order 'Preparing'
+    const ordersPreparing = await Order.find({ status: "Preparing" });
+    if (!ordersPreparing) return;
+
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours)
+    let filterOrders = ordersPreparing.filter(
+      (order) => today.getTime() >= order.waktuBerangkat.getTime() - 90000000
+    );
+    if (filterOrders.length == 0) return;
+
+    //todo 3. Yg lolos dari todo 2, ganti status dari 'Preparing' ke 'Postponed'
+    const setPreparingToPostponed = await Promise.all(
+      filterOrders.map(
+        async (order) =>
+          await Order.findByIdAndUpdate(
+            order._doc._id,
+            {
+              status: "Postponed",
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!setPreparingToPostponed) return;
+
+    //todo 4. Yg lolos dari todo 3, orderId nya di pull dr UserAuth.order
+    const removeOrderID = await Promise.all(
+      setPreparingToPostponed.map(
+        async (order) =>
+          await UserAuth.findByIdAndUpdate(
+            order.owner._id,
+            {
+              $pull: { order: { $in: [order._id] } },
+            },
+            { new: true }
+          )
+      )
+    );
+    if (!removeOrderID) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setLateOrderPreparingToPostponed, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//! Execute Daily
+//* CASE 4. h+3 waktuTiba Bagasi, Order 'Ready' to 'Delivered', pull id from User, daily
+const setOrderReadyToDelivered = async () => {
+  try {
+    //todo 1. Find Order 'Ready'
+    const ordersReady = await Order.find({ status: "Ready" });
+    if (!ordersReady) return;
+
+    //todo 2. Menambahkan waktuTiba ke dlm ordersDelivered dari Bagasi reference Order tsb
+    // const ordersWithWaktuTiba = await Promise.all(
+    //   ordersReady.map(async (order) => ({
+    //     ...order,
+    //     waktuTiba: (await Bagasi.findById(order.bagasi._id)).waktuTiba,
+    //   }))
+    // );
+
+    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuTiba Bagasi (h+3)
+    const filterOrders = ordersReady.filter(
+      (order) => today.getTime() >= order.waktuTiba.getTime() + 259200000
+    );
+    if (filterOrders.length == 0) return;
+
+    //todo 4. Yg lolos dari todo 3, ganti status dari 'Ready' ke 'Delivered'
+    const setReadyToDelivered = await Promise.all(
+      filterOrders.map(
+        async (order) =>
+          await Order.findByIdAndUpdate(
+            //Perhatikan ini nama id nya ada .doc._id krn document mongo kita manipulate di todo 2, jd struktur document nya otomatis berubah, tdk sama lg dgn struktur dokumen mongo yg biasanya.
+            order._doc._id,
+            { status: "Delivered" },
+            { new: true }
+          )
+      )
+    );
+
+    if (!setReadyToDelivered) return;
+
+    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order
+    const removeOrderID = await Promise.all(
+      setReadyToDelivered.map(
+        async (order) =>
+          await UserAuth.findByIdAndUpdate(
+            order.owner._id,
+            {
+              $pull: { order: { $in: [order._id] } },
+            },
+            { new: true }
+          )
+      )
+    );
+
+    if (!removeOrderID) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setOrderReadyToDelivered, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//! Execute Monthly
+//* CASE 5. Bagasi 'Unloaded dan Bagasi 'Canceled', active true ke active false, not pull id, monthly
+const setBagasiToFalse = async () => {
+  try {
+    //todo 1. scan Bagasi.status yg 'Unloaded' dan 'Canceled'.
+    const statusUnloadAndCancel = await Bagasi.find({
+      $or: [{ status: "Unloaded" }, { status: "Canceled" }],
     });
+    if (!statusUnloadAndCancel) return;
 
-    if(!statusCloseCancel) return;
+    //todo 2. loop Bagasi yang lolos kodisional todo 2, di loop ini ganti status nya dari active ke false
+    const setBagasiActiveToFalse = await Promise.all(
+      statusUnloadAndCancel.map(
+        async (el) =>
+          await Bagasi.findByIdAndUpdate(
+            el._id,
+            {
+              active: false,
+            },
+            { new: true, runValidators: true }
+          )
+      )
+    );
 
-    //todo Jika true, Bagasi.active = false
-    const changeActive = statusCloseCancel.map(async el => {
-        await Bagasi.findByIdAndUpdate(el._id, { active: false }, {
+    if (!setBagasiActiveToFalse) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setBagasiToFalse, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//! Execute Monthly
+//* CASE 6. Order 'Delivered' dan Order 'Postponed', active true ke active false, not pull id, monthly
+const setOrderToFalse = async () => {
+  try {
+    //todo 1. scan Order.status yg 'Delivered' dan 'Postponed'.
+    const statusDeliveredAndPostponed = await Order.find({
+      $or: [{ status: "Delivered" }, { status: "Postponed" }],
+    });
+    if (!statusDeliveredAndPostponed) return;
+
+    //todo 2. loop Order yang lolos kodisional todo 2, di loop ini ganti status nya dari active ke false
+    const setOrderActiveToFalse = await Promise.all(
+      statusDeliveredAndPostponed.map(async (el) => {
+        await Order.findByIdAndUpdate(
+          el._id,
+          { active: false },
+          {
             new: true,
-            runValidators: true
-        })
-    });
-    if(!changeActive) return;
+            runValidators: true,
+          }
+        );
+      })
+    );
 
+    if (!setOrderActiveToFalse) return;
 
-    //! UNTUK ORDER MODEL
-    //todo scan Order.status yg Delivered dan Canceled. Jika true, Order.active = false
-    const statusDeliverCancel = await Order.find({
-        $or: [{status: 'Delivered'}, {status: 'Canceled'}]
-    });
-    if(!statusDeliverCancel) return;
+    console.log(
+      `successfully executing nodeSchedule: setOrderToFalse, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
 
-    //todo Jika true, Order.active = false
-    const modifyActive = statusDeliverCancel.map(async el => {
-        await Order.findByIdAndUpdate(el._id, { active: false }, {
-            new: true,
-            runValidators: true
-        })
-    });
-    if(!modifyActive) return;
-});
+//! ********************* JOB SCHEDULE ********************* //
 
+//! Triggered EVERY MINUTE
+const jobTesting = () => {
+  schedule.scheduleJob("* * * * *", function () {
+    // console.log("testing");
+  });
+};
 
+//! Triggered DAILY “At 00:00.”
+const jobDaily = () => {
+  schedule.scheduleJob("0 0 * * *", function () {
+    setBagasiStatus();
+    setBagasiClosedToUnloaded();
+    setFullOrderPreparingToPostponed();
+    setLateOrderPreparingToPostponed();
+    setOrderReadyToDelivered();
+  });
+};
 
-//! Execute ONCE A DAY
-//* Mengubah Bagasi.status = 'Opened' to 'Closed' dan 'Scheduled' to 'Canceled'
-//* Mengubah Order.status = 'Ready' to 'Delivered'dan 'Preparing' to 'Canceled'
-const changeStatus = catchAsync(async() => {
-    
+//! Triggered Every 2 weeks Tgl 1 dan 15 tiap bulan
+const jobEvery2Weeks = () => {
+  schedule.scheduleJob("30 1 1,15 * *", function () {});
+};
 
-    //todo Scan Bagasi.status = Opened. Jika H-1 Bagasi.tglBrkt = Bagasi.status = Closed
-    await status(Bagasi, '-1', 'Opened', 'Closed');
-
-    //todo scan Bagasi.status = Scheduled. Jika H-1 Bagasi.tglBrkt = Bagasi.status = Canceled
-    await status(Bagasi, '-1', 'Scheduled', 'Canceled');
-
-    //todo scan Order.status = Ready. Jika H+1 Bagasi.tglTiba = Order.status = Delivered
-    await status(Order, '+1' ,'Ready', 'Delivered');
-
-    //todo scan Order.status = Preparing. Jika H-1 Bagasi.tglBrkt = Order.status = Canceled
-    await status(Order, '-1', 'Preparing', 'Canceled');
-
-});
-
-const scheduleActive = () => {
-    schedule.scheduleJob('0 0 1 * *', function(){//! Triggered ONCE A MONTH
-        // console.log('Triggered ONCE A MONTH!');
-        // console.log(`Triggered at: ${new Date()}`);
-        changeActive();
-    });
-}
-
-
-const scheduleStatus = () => {
-    schedule.scheduleJob('0 0 * * *', function(){//! Triggered ONCE A DAY
-        // console.log('Triggered ONCE A DAY!');
-        // console.log(`Triggered at: ${new Date()}`);
-        changeStatus();
-    });
-} 
+//! Triggered MONTHLY “At 00:00 on day-of-month 1.”
+const jobMonthly = () => {
+  schedule.scheduleJob("0 0 1 * *", function () {
+    setBagasiToFalse();
+    setOrderToFalse();
+  });
+};
 
 exports.startJob = () => {
-    scheduleActive();
-    scheduleStatus();
-}
-
+  // jobTesting();
+  jobDaily();
+  // jobEvery2Weeks();
+  jobMonthly();
+};

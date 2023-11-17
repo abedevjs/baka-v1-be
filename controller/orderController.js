@@ -1,5 +1,6 @@
 const Order = require("./../model/orderModel");
 const User = require("./../model/userModel");
+const UserAuth = require("./../model/userAuthModel");
 const Bagasi = require("./../model/bagasiModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
@@ -14,6 +15,9 @@ exports.getAllOrder = catchAsync(async (req, res, next) => {
   if (req.query.sort) query = query.sort(req.query.sort);
   if (req.query.fields) query = query.select(req.query.fields);
   if (req.query.page) {
+    //* Tambahan knowledge cara query yg benar menurut mongoDB team. Apply for your next project
+    //* https://codebeyondlimits.com/articles/pagination-in-mongodb-the-only-right-way-to-implement-it-and-avoid-common-mistakes
+
     const page = req.query.page * 1 || 1;
     const limit = req.query.limit * 1 || 100;
     const skip = (page - 1) * limit;
@@ -63,9 +67,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   //todo 3. Cek owner bagasi tidak boleh order bagasi sendiri
   if (bagId.owner._id.toString() === req.user.id)
-    return next(
-      new AppError("Kakak tidak boleh membeli bagasi sendiri 😢", 403)
-    );
+    return next(new AppError("Kakak tidak boleh membeli bagasi sendiri", 403));
 
   //todo 3. Cek Bagasi.status. Hanya boleh order jika status bagasi sudah di verifikasi Admin (status: 'Opened')
   if (bagId.status != "Opened")
@@ -74,9 +76,12 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     );
 
   //todo 4. Cek user tdk punya lebih dari 10 aktif order di bagasi yang berbeda2.
-  if (req.user.order.length >= process.env.MAX_ORDER)
+  if (req.user.order.length >= process.env.MAX_ORDER_ACTIVE)
     return next(
-      new AppError("Kakak hanya boleh memiliki 10 order aktif 😢", 403)
+      new AppError(
+        `Kakak hanya boleh memiliki maks. ${process.env.MAX_ORDER_ACTIVE} order aktif 🙁`,
+        403
+      )
     );
 
   //todo 5.PREVENTING USER TO ORDER THE SAME BAGASI TWICE. IN THE FUTURE, THIS COULD BE LIMITED TO 2-3 ORDERS PER 1 BAGASI
@@ -93,7 +98,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     if (count.length != check.length)
       return next(
         new AppError(
-          "Kakak sudah memesan bagasi ini, ingin mengupdate pesanan kak? 😃",
+          "Kakak sudah memesan bagasi ini. Untuk update Order, silahkan ke Area User",
           403
         )
       );
@@ -108,33 +113,35 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error.
-  const user = await User.findById(req.user.id);
+  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error. --start
+  //* Code lines dibawah ini sudah dihapus karena calling update user.telpon sudah di handle di front end sama seperti di bagasiCreate.
+  // const user = await UserAuth.findById(req.user.id);
 
-  if (!user.telpon) {
-    const addTelponToUser = await User.findByIdAndUpdate(
-      user,
-      {
-        telpon: req.body.telpon,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+  // if (!user.telpon) {
+  //   const addTelponToUser = await UserAuth.findByIdAndUpdate(
+  //     user,
+  //     {
+  //       telpon: req.body.telpon,
+  //     },
+  //     {
+  //       new: true,
+  //       runValidators: true,
+  //     }
+  //   );
 
-    if (!addTelponToUser.telpon)
-      return next(
-        new AppError(
-          "Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢",
-          400
-        )
-      );
-    if (!addTelponToUser)
-      return next(
-        new AppError("Kesalahan dalam menambahkan nomor telpon Kakak 😢", 400)
-      );
-  }
+  //   if (!addTelponToUser.telpon)
+  //     return next(
+  //       new AppError(
+  //         "Sertakan nomor WhatsApp kak, agar mudah dihubungi 😢",
+  //         400
+  //       )
+  //     );
+  //   if (!addTelponToUser)
+  //     return next(
+  //       new AppError("Kesalahan dalam menambahkan nomor telpon Kakak 😢", 400)
+  //     );
+  // }
+  //todo 7. If User does not have telpon and he wont update (karena di model UserAuth telpon initially 0), return error. --end
 
   //todo 9. Calculate Rp. biayaRp (jumlahKg * Bagasi.harga) , adminFeeRp (biayaRp * tax) , netRp (biayaRp + adminFeeRp)
   const totalBiayaRp = Number(req.body.jumlahKg) * bagId.hargaRp;
@@ -150,8 +157,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     adminFeeRp: totalAdminFeeRp,
     netRp: totalNetRp,
     catatan: req.body.catatan,
-    owner: await User.findById(req.user.id), //* Embedding
-    bagasi: { _id: req.params.bagasiId }, //* Referencing
+    owner: await UserAuth.findById(req.user.id), //* Embedding. The reason i  remain choosing Embedding is, we rarely/never need digging User data via this document.
+    bagasi: { _id: req.params.bagasiId }, //* Referencing. The reason i switched to Referencing rather than Embedding is when the Bagasi is updated, this document is not  being updated as well.
     // bagasi: await Bagasi.findById(bagId), //* Embedding
   });
 
@@ -173,29 +180,34 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   //todo 2. Check if Order is exist
   const order = await Order.findById(req.params.id);
   if (!order)
-    return next(new AppError("Order yang Kakak minta tidak tersedia 😢", 404));
+    return next(new AppError("Order yang Kakak minta tidak tersedia", 404));
 
   //todo 3. Check if Bagasi is exist
   const bagasi = order.bagasi;
   const currentBagasi = await Bagasi.findById(bagasi._id);
   if (!currentBagasi)
-    return next(new AppError("Bagasi yang kakak minta tidak tersedia 😢", 404));
+    return next(new AppError("Bagasi yang kakak minta tidak tersedia", 404));
 
   //todo 4. Check if User is owner
   if (order.owner._id.toString() !== req.user.id)
     return next(
+      new AppError("Kakak bukan pemilik order ini. Akses di tolak ya Kak", 401)
+    );
+
+  //todo 5. Check Bagasi.status. Hanya boleh update jika (status: 'Opened')
+  if (bagasi.status !== "Opened")
+    return next(
       new AppError(
-        "Kakak bukan pemilik order ini 😢. Akses di tolak ya Kak",
-        401
+        `Status Bagasi ${bagasi.status}. Maaf ya kak update di tolak.`
       )
     );
 
-  //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing')
+  //todo 5. Check Order.status. Hanya boleh update jika order blm dibayar (status: 'Preparing').
   // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
   if (order.status !== "Preparing")
     return next(
       new AppError(
-        "Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi 🙂",
+        "Order kakak sudah terbayar. Jika ingin mengupdate, silahkan buat order baru lagi",
         401
       )
     );
@@ -249,6 +261,119 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   });
 });
 
+//* Desc: Di eksekusi oleh user dan nodeschedule (jika user lupa dan jika memungkinkan). Akan set orderStatus dari 'Ready' ke 'Delivered'
+exports.deliveredOrder = catchAsync(async (req, res, next) => {
+  //todo 1. take id and check the order if exists
+  const order = await Order.findById(req.params.id);
+  if (!order)
+    return next(new AppError("Order yang Kakak minta tidak tersedia", 404));
+
+  //todo 2. Check if User is owner
+  if (order.owner._id.toString() !== req.user.id)
+    return next(
+      new AppError("Kakak bukan pemilik order ini. Akses di tolak ya Kak", 401)
+    );
+
+  //todo 3. Check only if status is Ready
+  if (order.status !== "Ready")
+    return next(
+      new AppError("Untuk akses ini Order status harus 'Ready' ya kak", 403)
+    );
+
+  //todo 4. Change the status from 'Ready' to 'Delivered'
+  const newStatusOrder = await Order.findByIdAndUpdate(
+    order,
+    { status: "Delivered" },
+    { new: true, runValidators: true }
+  );
+  if (!newStatusOrder)
+    return next(
+      new AppError(
+        "Ada kesalahan dalam mengubah status jadi Delivered. Coba beberapa saat lagi ya kak",
+        400
+      )
+    );
+
+  //todo 5. Remove the orderID from owner.order arr
+  const owner = await UserAuth.find(order.owner._id);
+  const removeOrderId = await UserAuth.findByIdAndUpdate(
+    owner,
+    {
+      $pull: { order: { $in: [req.params.id] } },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!removeOrderId)
+    return next(new AppError("Kesalahan dalam menyelesaikan Order", 400));
+
+  //todo 6. Check order.bagasi.id if all the order.status in Bagasi is 'Delivered'
+  const bagasi = await Bagasi.findById(order.bagasi._id); // {}
+  // const bagasi = await Bagasi.find({ _id: order.bagasi._id }); // [{}]
+  if (!bagasi)
+    return next(
+      new AppError("Terjadi kesalahan, Bagasi tidak ditemukan.", 400)
+    );
+
+  const bagasiOrderIds = Object.values(bagasi.order).map((id) => id); // ['4f5sa', '87f5f']
+  const orderStatuses = await Promise.all(
+    bagasiOrderIds.map(
+      async (orderID) => (await Order.findById(orderID)).status
+    )
+  ); // ['Ready', 'Ready', 'Delivered']
+
+  if (orderStatuses.every((el) => el == "Delivered")) {
+    //todo 7. if all the order.status are 'Delivered', change Bagasi.status to 'Unloaded'
+    const newStatusBagasi = await Bagasi.findByIdAndUpdate(
+      bagasi,
+      {
+        status: "Unloaded",
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!newStatusBagasi)
+      return next(
+        new AppError(
+          "Ada kesalahan mengubah status Bagasi ke Unloaded. Coba beberapa saat lagi ya kak",
+          400
+        )
+      );
+
+    //todo 8. if all the order.status are 'Delivered', remove the bagasiID from Owner.bagasi
+    const removeBagasiID = await UserAuth.findByIdAndUpdate(
+      bagasi.owner._id,
+      {
+        $pull: {
+          bagasi: {
+            $in: [order.bagasi._id],
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!removeBagasiID)
+      return next(
+        new AppError(
+          "Ada gangguan dari sistem kami. Coba beberapa saat lagi ya kak",
+          400
+        )
+      );
+  }
+
+  res.status(200).json({
+    status: "Success",
+    message: "Order Delivered",
+    requestedAt: req.time,
+    // data: {
+    //   updatedOrder,
+    // },
+  });
+});
+
 exports.deleteOrder = catchAsync(async (req, res, next) => {
   //* {{URL}}/order/634d1e13fc881dd5c6208968
 
@@ -266,12 +391,12 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
       )
     );
 
-  //todo 3. Check Order.status. Hanya boleh delete jika order blm dibayar (status: 'Preparing')
+  //todo 3. Check Order.status. Hanya boleh delete jika order blm dibayar, sudah sampai, atau dibatalkan (status: 'Preparing', 'Delivered', 'Postponed')
   // 'Preparing' yes edit yes delete. 'Ready' no edit no delete. 'Delivered' no edit yes delete
-  if (order.status !== "Preparing")
+  if (order.status == "Ready")
     return next(
       new AppError(
-        "Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan 🙂",
+        "Order kakak sudah Ready. Order tidak dapat dihapus atau dibatalkan, kecuali jika Traveler membatalkan keberangkatan",
         401
       )
     );
@@ -288,12 +413,14 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
   //     }
   // });
 
-  //todo 4. Check how many IDs of same bagasi on user.orderBagasiId, if has more than one, delete it, and add it back to user.orderBagasiId (step 6)
-  const user = await User.findById(req.user.id);
+  //todo 4. If User ordered the same Bagasi more than once, check how many IDs of same bagasi on user.orderBagasiId, if has more than one, delete it, and add it back to user.orderBagasiId (step 6)
+  const user = await UserAuth.findById(req.user.id);
   const sameIDs = user.orderBagasiId.filter((el) => el == order.bagasi._id);
+  //* https://www.mongodb.com/community/forums/t/pull-only-one-item-in-an-array-of-instance-in-mongodb/12928/2
+  // Bisa dipertimbangkan cara untuk delete/pull only one item in an array
 
   //todo 5. hapus order dari User.order[id] dan Hapus bagasiId dari User.orderBagasiId[id]
-  const userOrder = await User.findByIdAndUpdate(
+  const userOrder = await UserAuth.findByIdAndUpdate(
     user,
     {
       $pull: {
@@ -317,7 +444,7 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
     sameIDs.pop();
     const id = [...sameIDs];
 
-    const sameIDsBack = await User.findByIdAndUpdate(
+    const sameIDsBack = await UserAuth.findByIdAndUpdate(
       user,
       {
         $push: {
@@ -355,21 +482,5 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
     status: "Success",
     message: "Order berhasil di hapus",
     active: deleteOrder.active,
-  });
-});
-
-exports.deliveredOrder = catchAsync(async (req, res, next) => {
-  console.log(req.isAuthenticated());
-
-  // if (!req.isAuthenticated()) return next(new AppError("talaso", 403));
-  console.log("Allah");
-
-  res.status(200).json({
-    status: "Success",
-    message: "Order Delivered",
-    requestedAt: req.time,
-    // data: {
-    //   updatedOrder,
-    // },
   });
 });

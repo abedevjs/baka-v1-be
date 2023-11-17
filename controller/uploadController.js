@@ -1,9 +1,11 @@
 const Bagasi = require("./../model/bagasiModel");
 const Order = require("../model/orderModel");
 const User = require("./../model/userModel");
+const UserAuth = require("./../model/userAuthModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
 const multerUpload = require("../utility/multer");
+const Dokumen = require("../model/dokumenModel");
 
 exports.uploadMiddleware = multerUpload.single("dokumen");
 
@@ -26,21 +28,21 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
   } else return next(new AppError("Tidak ada file yang di upload Kak 😢", 401));
 
   //todo 1. Grab UserID
-  const currentUser = await User.findById(req.user.id);
+  const currentUser = await UserAuth.findById(req.user.id);
 
   //todo 2. Cek User.bagasi dan User.order
   if (currentUser.bagasi.length == 0 && currentUser.order.length == 0)
     return next(
       new AppError(
-        "User belum buat Bagasi atau Order. Upload Dokumen tidak diterima",
+        "Kk belum buat Bagasi atau Order. Upload Dokumen tidak diterima",
         403
       )
     );
 
-  //! WITHOUT req.params.id
+  //! WITHOUT req.params.id. Jika user upload saat createBagasi atau createOrder?
   if (!req.params.id) {
     //todo 1. Upload new Dokumen ke User.dokumen
-    const newDokumen = await User.findByIdAndUpdate(
+    const newDokumen = await UserAuth.findByIdAndUpdate(
       currentUser,
       {
         $push: {
@@ -61,7 +63,7 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
         )
       );
   } else {
-    //! WITH req.params.id
+    //! WITH req.params.id. Jika user upload saat updateBagasi atau updateOrder?
     //todo 1. Grab req.params.id. Document masih unknown karena belum tau Bagasi dokumen atau Order dokumen
     const docID = req.params.id;
 
@@ -101,6 +103,13 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
     if (!newDokumen)
       return next(new AppError("Update Dokumen tidak berhasil 😢", 401));
   }
+
+  //todo Create dokumen ke Dokumen db
+  const newDoc = await Dokumen.create({ nama: updateDokumen });
+  if (!newDoc)
+    return next(
+      new AppError("Menambahkan Dokumen baru ke DB tidak berhasil 🙁", 401)
+    );
 
   res.status(200).json({
     status: "Success",
