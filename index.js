@@ -22,10 +22,10 @@ const DB = process.env.DATABASE.replace(
   process.env.DATABASE_PASSWORD
 );
 mongoose
-  .connect(process.env.DATABASE_LOCAL, {
-    //* Line ini enable klo aktif kan LOCAL database jgn lupa aktifkan jg session nya di app.js
-    // mongoose
-    // .connect(DB, {
+  // .connect(process.env.DATABASE_LOCAL, {
+  //* Line ini enable klo aktif kan LOCAL database jgn lupa aktifkan jg session nya di app.js
+  // mongoose
+  .connect(DB, {
     //* Line ini enable klo aktifkan REMOTE database jgn lupa aktifkan jg session nya di app.js
     // useNewUrlParser: true, //tdk usah krn sdh pake mongoose v6
     // useCreateIndex: true, //tdk usah krn sdh pake mongoose v6

@@ -83,19 +83,13 @@ app.use(
     // }),
 
     store: MongoStore.create({
-      //* LOCAL database
-      mongoUrl: process.env.DATABASE_LOCAL,
+      //* REMOTE database
+      mongoUrl: process.env.DATABASE.replace(
+        "<PASSWORD>",
+        process.env.DATABASE_PASSWORD
+      ),
       ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
     }),
-
-    // store: MongoStore.create({
-    //   //* REMOTE database
-    //   mongoUrl: process.env.DATABASE.replace(
-    //     "<PASSWORD>",
-    //     process.env.DATABASE_PASSWORD
-    //   ),
-    //   ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
-    // }),
 
     // cookie: { secure: true } //this wont work without https
   })
