@@ -12,8 +12,9 @@ module.exports = function (passport) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        // callbackURL: "/auth/google/redirect",
-        callbackURL: "https://baka-v1-be.vercel.app/auth/google/redirect",
+        callbackURL: "/auth/google/redirect",
+        // callbackURL: "https://baka-v1-be.vercel.app/auth/google/redirect",
+        proxy: true,
       },
       async (access_token, refresh_token, profile, done) => {
         // console.log(profile);
@@ -57,8 +58,9 @@ module.exports = function (passport) {
       {
         clientID: process.env.FACEBOOK_CLIENT_ID,
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-        // callbackURL: "/auth/facebook/redirect",
-        callbackURL: "https://baka-v1-be.vercel.app/auth/facebook/redirect",
+        callbackURL: "/auth/facebook/redirect",
+        // callbackURL: "https://baka-v1-be.vercel.app/auth/facebook/redirect",
+        proxy: true,
       },
       async (access_token, refresh_token, profile, done) => {
         // console.log(profile);
