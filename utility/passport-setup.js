@@ -15,6 +15,7 @@ module.exports = function (passport) {
         callbackURL: "/auth/google/redirect",
         // callbackURL: "https://baka-v1-be.vercel.app/auth/google/redirect",
         proxy: true,
+        scope: ["profile", "email"],
       },
       async (access_token, refresh_token, profile, done) => {
         // console.log(profile);
