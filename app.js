@@ -58,6 +58,7 @@ const limiter = rateLimit({
   limit: 500,
   windosMs: 1 * 60 * 60 * 1000,
   message: "Coba lagi setelah 1 jam ya kak",
+  validate: { trustProxy: true },
 });
 app.use(limiter);
 //! Middlewares Security --end
@@ -96,7 +97,7 @@ app.use(
       ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
     }),
 
-    cookie: { secure: true } //this wont work without https
+    cookie: { secure: true }, //this wont work without https
   })
 );
 //! Session Middlewares --end
