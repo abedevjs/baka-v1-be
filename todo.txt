@@ -180,6 +180,8 @@ BAGASI
 🔴❓ Guard clause di bagasiUpdate terlalu strict perlu di sync dgn FE react?
 🔴 Bagasi_tax bisa jadi 0% untuk user yang ada perjanjian partnership dgn Baka. Di UserAuth tambahkan property partnership: Boolean.
 🔴❓ Jika Bagasi status 'Closed' bisakah untuk update harga lagi?
+🔴 Buat api getAllBagasu khusus untuk hero, karena klo pake api biasa ke detect,
+🔴 Perbaiki isi response di tiap api
 
 ORDER
 🔴 Cek lagi: 'Kakak hanya boleh memiliki ${process.env.MAX_ORDER_ACTIVE} order aktif' apakah ini order active semua
@@ -190,6 +192,8 @@ ORDER
     ✅ Sdh di cek algo nya, sejauh ini bulletproof.
 🔴❓ Bgmn handle order preparing yang bagasinya sudah closed, tapi jauh sebelum h-1 waktuBerangkat. Akankah dy dibiarkan Postponed terus?
     ✅ done, sdh di handle nodeschedule
+🔴 Buat api getAllOrder khusus untuk hero, karena klo pake api biasa ke detect,
+🔴 Perbaiki isi response di tiap api
 
 USER
 🔴 Algo deleteUser harus perbaiki lagi. Syarat delete user: 1. Tidak ada bagasi yg sudah di booking (status: !== Opened && bookedKg == 0). 2. Tidak ada order yg ready (status !== ready)

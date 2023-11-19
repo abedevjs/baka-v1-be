@@ -5,6 +5,7 @@ const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
 
 exports.getAllBagasi = catchAsync(async (req, res, next) => {
+  console.log(req.user);
   let query = Bagasi.find();
 
   if (req.query) query = Bagasi.find(req.query);
