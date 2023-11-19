@@ -96,7 +96,7 @@ app.use(
       ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
     }),
 
-    // cookie: { secure: true } //this wont work without https
+    cookie: { secure: true } //this wont work without https
   })
 );
 //! Session Middlewares --end
