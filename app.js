@@ -32,6 +32,9 @@ const packageJson = require("./package.json", { type: "json" });
 updateNotifier({ pkg: packageJson });
 
 //! Middlewares Security --start
+//I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
+app.enable("trust proxy");
+
 //CORS
 app.use(
   cors({
@@ -58,7 +61,7 @@ const limiter = rateLimit({
   limit: 500,
   windosMs: 1 * 60 * 60 * 1000,
   message: "Coba lagi setelah 1 jam ya kak",
-  validate: { trustProxy: true },
+  validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
 });
 app.use(limiter);
 //! Middlewares Security --end
