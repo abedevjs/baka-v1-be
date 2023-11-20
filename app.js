@@ -61,7 +61,7 @@ const limiter = rateLimit({
   limit: 500,
   windosMs: 1 * 60 * 60 * 1000,
   message: "Coba lagi setelah 1 jam ya kak",
-  validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
+  // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
 });
 app.use(limiter);
 //! Middlewares Security --end
