@@ -4,7 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
-// const rateLimit = require("express-rate-limit");
+const rateLimit = require("express-rate-limit");
 
 const homeRoutes = require("./routes/homeRouter");
 const bagasiRoutes = require("./routes/bagasiRouter");
@@ -27,13 +27,14 @@ require("./utility/passport-setup")(passport);
 const app = express();
 
 const updateNotifier = require("simple-update-notifier");
+const { none } = require("./utility/multer");
 const packageJson = require("./package.json", { type: "json" });
 
 updateNotifier({ pkg: packageJson });
 
 //! Middlewares Security --start
 //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
-// app.enable("trust proxy");
+app.set("trust proxy", 1);
 
 //CORS
 app.use(
@@ -57,13 +58,13 @@ app.use(mongoSanitize());
 app.use(hpp());
 
 // Limit requests API from same IP
-// const limiter = rateLimit({
-//   limit: 500,
-//   windosMs: 1 * 60 * 60 * 1000,
-//   message: "Coba lagi setelah 1 jam ya kak",
-//   // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
-// });
-// app.use(limiter);
+const limiter = rateLimit({
+  limit: 500,
+  windosMs: 1 * 60 * 60 * 1000,
+  message: "Coba lagi setelah 1 jam ya kak",
+  // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
+});
+app.use(limiter);
 //! Middlewares Security --end
 
 //! Middlewares Operational --start
@@ -84,7 +85,10 @@ app.use(
     saveUninitialized: false, //dont create a session until something is stored
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: true, //this wont work without https
+      sameSite: none, //We're not on the same site, we're using different site so the cookie need to effectively transfer from Backend to Frontend
     },
+
     // store: MongoStore.create({ //* LOCAL database
     //     mongoUrl: process.env.DATABASE_LOCAL,
     //     ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
@@ -99,8 +103,6 @@ app.use(
       ),
       ttl: 14 * 24 * 60 * 60, // = time to leave 14 days. Default
     }),
-
-    cookie: { secure: true }, //this wont work without https
   })
 );
 //! Session Middlewares --end
