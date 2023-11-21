@@ -33,7 +33,7 @@ updateNotifier({ pkg: packageJson });
 
 //! Middlewares Security --start
 //Enable when deployment OR when not using localhost
-app.set("trust proxy", 1);
+// app.set("trust proxy", 1);
 
 //CORS
 app.use(
@@ -61,7 +61,6 @@ const limiter = rateLimit({
   limit: 500,
   windosMs: 1 * 60 * 60 * 1000,
   message: "Coba lagi setelah 1 jam ya kak",
-  // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
 });
 app.use(limiter);
 //! Middlewares Security --end
@@ -84,8 +83,8 @@ app.use(
     saveUninitialized: false, //dont create a session until something is stored
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      secure: true, //Enable when deployment OR when not using localhost, this wont work without https
-      sameSite: "none", //Enable when deployment OR when not using localhost, We're not on the same site, we're using different site so the cookie need to effectively transfer from Backend to Frontend
+      // secure: true, //Enable when deployment OR when not using localhost, this wont work without https
+      // sameSite: "none", //Enable when deployment OR when not using localhost, We're not on the same site, we're using different site so the cookie need to effectively transfer from Backend to Frontend
     },
 
     // store: MongoStore.create({ //* LOCAL database
