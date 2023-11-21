@@ -34,7 +34,7 @@ updateNotifier({ pkg: packageJson });
 
 //! Middlewares Security --start
 //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
-app.set("trust proxy", 1);
+// app.set("trust proxy", 1);
 
 //CORS
 app.use(
@@ -86,7 +86,7 @@ app.use(
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       secure: true, //this wont work without https
-      sameSite: none, //We're not on the same site, we're using different site so the cookie need to effectively transfer from Backend to Frontend
+      // sameSite: none, //We're not on the same site, we're using different site so the cookie need to effectively transfer from Backend to Frontend
     },
 
     // store: MongoStore.create({ //* LOCAL database
