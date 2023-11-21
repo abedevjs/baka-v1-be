@@ -63,7 +63,7 @@ app.use(hpp());
 //   message: "Coba lagi setelah 1 jam ya kak",
 //   // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
 // });
-app.use(limiter);
+// app.use(limiter);
 //! Middlewares Security --end
 
 //! Middlewares Operational --start
