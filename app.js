@@ -4,7 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
-const rateLimit = require("express-rate-limit");
+// const rateLimit = require("express-rate-limit");
 
 const homeRoutes = require("./routes/homeRouter");
 const bagasiRoutes = require("./routes/bagasiRouter");
@@ -57,12 +57,12 @@ app.use(mongoSanitize());
 app.use(hpp());
 
 // Limit requests API from same IP
-const limiter = rateLimit({
-  limit: 500,
-  windosMs: 1 * 60 * 60 * 1000,
-  message: "Coba lagi setelah 1 jam ya kak",
-  // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
-});
+// const limiter = rateLimit({
+//   limit: 500,
+//   windosMs: 1 * 60 * 60 * 1000,
+//   message: "Coba lagi setelah 1 jam ya kak",
+//   // validate: { trustProxy: true }, //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
+// });
 app.use(limiter);
 //! Middlewares Security --end
 
