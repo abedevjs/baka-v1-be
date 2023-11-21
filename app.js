@@ -33,7 +33,7 @@ updateNotifier({ pkg: packageJson });
 
 //! Middlewares Security --start
 //I enable this because when deployment, the passportJS strategy need to enable {proxy: true}
-app.enable("trust proxy");
+// app.enable("trust proxy");
 
 //CORS
 app.use(
