@@ -13,10 +13,8 @@ authRouter.route("/google").get(authController.authGoogleHandler);
 authRouter.get(
   "/google/redirect",
   passport.authenticate("google", {
-    // failureRedirect: `${process.env.CLIENT_URL}/login`,
-    failureRedirect: `/login`,
-    // successRedirect: `${process.env.CLIENT_URL}/list-bagasi`,
-    successRedirect: `/list-bagasi`,
+    failureRedirect: `${process.env.CLIENT_URL}/login`,
+    successRedirect: `${process.env.CLIENT_URL}/list-bagasi`,
   }),
   (err, req, res, next) => {
     if (err.name === "TokenError") res.redirect("/auth/google");
