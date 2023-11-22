@@ -62,7 +62,7 @@ module.exports = function (passport) {
         callbackURL: "/auth/facebook/redirect",
         // callbackURL: "https://baka-v1-be.vercel.app/auth/facebook/redirect",
         // proxy: true,
-        scope: ["public_profile", "email"],
+        // scope: ["public_profile", "email"],
       },
       async (access_token, refresh_token, profile, done) => {
         // console.log(profile);
