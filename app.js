@@ -27,7 +27,6 @@ require("./utility/passport-setup")(passport);
 const app = express();
 
 const updateNotifier = require("simple-update-notifier");
-const { none } = require("./utility/multer");
 const packageJson = require("./package.json", { type: "json" });
 
 updateNotifier({ pkg: packageJson });
