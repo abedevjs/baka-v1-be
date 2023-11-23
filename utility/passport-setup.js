@@ -2,7 +2,7 @@
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const UserAuth = require("../model/userAuthModel");
-const createSendToken = require("../controller/authController");
+const axios = require("axios");
 
 //! Using PASSPORT -- start ----------------------------------
 
@@ -61,14 +61,25 @@ module.exports = function (passport) {
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
         callbackURL: "/auth/facebook/redirect",
         // callbackURL: "https://baka-v1-be.vercel.app/auth/facebook/redirect",
+        profileFields: ["email", "displayName", "photos"],
         // proxy: true,
       },
       async (access_token, refresh_token, profile, done) => {
         // console.log(profile);
+        const img = await axios.get(
+          ` https://graph.facebook.com/${profile.id}?fields=id,name,email,picture&access_token=${access_token}`
+        );
+
+        // console.log(img.data.picture.data.url);
+
         const newUser = {
           nama: profile.displayName,
           facebookID: profile.id,
+          email: profile.emails[0].value,
           provider: profile.provider,
+          // image: profile.photos[0].value,
+          // image: `https://graph.facebook.com/v18.0/${profile.id}/picture`,
+          image: img.data.picture.data.url,
         };
 
         try {
