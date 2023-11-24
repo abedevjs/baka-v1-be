@@ -115,7 +115,6 @@ exports.updateUploadDokumen = catchAsync(async (req, res, next) => {
     status: "Success",
     message:
       "Dokumen berhasil di upload. Admin akan memeriksa validitas dokumen",
-    dokumen: updateDokumen,
   });
 });
 

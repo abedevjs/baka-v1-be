@@ -4,6 +4,7 @@ const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
 const Bagasi = require("../model/bagasiModel");
 const Order = require("../model/orderModel");
+const { encode } = require("../utility/cryptoJS");
 
 const filterBody = (obj, ...allowedFields) => {
   const newObj = {};
@@ -15,13 +16,16 @@ const filterBody = (obj, ...allowedFields) => {
 };
 
 exports.all = catchAsync(async (req, res) => {
-  const data = await UserAuth.find();
+  const allUser = await UserAuth.find();
+
+  const encryptedData = encode(allUser);
 
   res.status(200).json({
     status: "done",
-    results: data.length,
+    // results: data.length,
     data: {
-      data,
+      // allUser,
+      encryptedData,
     },
   });
 });
@@ -32,10 +36,13 @@ exports.profil = catchAsync(async (req, res, next) => {
     path: "bagasi order",
   });
 
+  const encryptedData = encode(user);
+
   res.status(200).json({
     status: "done",
     data: {
-      user,
+      // user,
+      encryptedData,
     },
   });
 });
@@ -65,12 +72,11 @@ exports.update = catchAsync(async (req, res, next) => {
       runValidators: true,
     }
   );
+  if (!updatedUser)
+    return next(new AppError("Maaf ya kak, ada kesalahan sistem dalam update User", 500));
 
   res.status(201).json({
     status: "done",
-    data: {
-      updatedUser,
-    },
   });
 });
 
@@ -125,7 +131,8 @@ exports.hapus = catchAsync(async (req, res, next) => {
     if (orderStatus.some((el) => el == "Ready")) {
       return next(
         new AppError(
-          "Kakak masih memiliki Order aktif. Permohonan ditolak untuk sementara 🙁"
+          "Kakak masih memiliki Order aktif. Permohonan ditolak untuk sementara",
+          400
         )
       );
     }
