@@ -3,6 +3,7 @@ const User = require("./../model/userModel");
 const UserAuth = require("./../model/userAuthModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
+const { encode } = require("../utility/cryptoJS");
 
 exports.getAllBagasi = catchAsync(async (req, res, next) => {
   let query = Bagasi.find();
@@ -25,11 +26,14 @@ exports.getAllBagasi = catchAsync(async (req, res, next) => {
   if (!bagasi)
     return next(new AppError("Hasil pencarian bagasi tidak tersedia", 404));
 
+  const encryptedData = encode(bagasi);
+
   res.status(200).json({
     status: "done",
-    result: bagasi.length,
+    // result: bagasi.length,
     data: {
-      bagasi,
+      // bagasi,
+      encryptedData,
     },
   });
 });
@@ -44,10 +48,13 @@ exports.getOneBagasi = catchAsync(async (req, res, next) => {
   if (!bagasi)
     return next(new AppError("Bagasi yang Kakak minta tidak tersedia 😢", 404));
 
+  const encryptedData = encode(bagasi);
+
   res.status(200).json({
     status: "done",
     data: {
-      bagasi,
+      // bagasi,
+      encryptedData,
     },
   });
 });
@@ -116,9 +123,6 @@ exports.createBagasi = catchAsync(async (req, res, next) => {
     status: "Success",
     message:
       "Bagasi berhasil dibuat. Selanjutnya, User upload dokumen keberangkatan.",
-    data: {
-      bagasi,
-    },
   });
 });
 
@@ -265,9 +269,6 @@ exports.updateBagasi = catchAsync(async (req, res, next) => {
     status: "Success",
     message:
       "Bagasi berhasil di update. Selanjutnya, User upload dokumen keberangkatan.",
-    data: {
-      updatedBagasi,
-    },
   });
 });
 
@@ -325,6 +326,5 @@ exports.deleteBagasi = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "Success",
     message: "Bagasi berhasil dihapus",
-    bagasiActive: bagasiActive.active,
   });
 });

@@ -5,6 +5,7 @@ const Bagasi = require("./../model/bagasiModel");
 const catchAsync = require("./../utility/catchAsync");
 const AppError = require("./../utility/appError");
 const multerUpload = require("../utility/multer");
+const { encode } = require("../utility/cryptoJS");
 
 exports.uploadMiddleware = multerUpload.single("dokumen");
 
@@ -31,11 +32,14 @@ exports.getAllOrder = catchAsync(async (req, res, next) => {
       new AppError("Hasil pencarian order Kakak tidak tersedia 😢", 404)
     );
 
+  const encryptedData = encode(order);
+
   res.status(200).json({
     status: "done",
-    result: order.length,
+    // result: order.length,
     data: {
-      order,
+      // order,
+      encryptedData,
     },
   });
 });
@@ -46,11 +50,14 @@ exports.getOneOrder = catchAsync(async (req, res, next) => {
   if (!order)
     return next(new AppError("Order yang Kakak minta tidak tersedia 😢", 404));
 
+  const encryptedData = encode(order);
+
   res.status(200).json({
     status: "done",
-    result: order.length,
+    // result: order.length,
     data: {
-      order,
+      // order,
+      encryptedData,
     },
   });
 });
@@ -167,10 +174,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: "Success",
     message: "Order berhasil dibuat. User mohon upload bukti pembayaran",
-    requestedAt: req.time,
-    data: {
-      order,
-    },
   });
 });
 
@@ -195,7 +198,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
     );
 
   //todo 5. Check Bagasi.status. Hanya boleh update jika (status: 'Opened')
-  if (bagasi.status !== "Opened")
+  if (currentBagasi.status !== "Opened")
     return next(
       new AppError(
         `Status Bagasi ${bagasi.status}. Maaf ya kak update di tolak.`
@@ -254,10 +257,6 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "Success",
     message: "Order berhasil di update. User mohon upload bukti pembayaran",
-    requestedAt: req.time,
-    data: {
-      updatedOrder,
-    },
   });
 });
 
