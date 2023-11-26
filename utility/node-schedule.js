@@ -6,7 +6,8 @@ const UserAuth = require("../model/userAuthModel");
 const today = new Date();
 
 //! BAGASI Case
-//* CASE 1. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', Bagasi 'Opened' to 'Closed' pull id from User, daily
+//* CASE 1a. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', pull id from User, daily
+//* CASE 1b. h-1 waktuBerangkat, Bagasi 'Opened' to 'Closed' , daily
 //* CASE 2. Bagasi 'Closed' to 'Unloaded', pull id from User, daily
 //! ORDER Case
 //* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
@@ -16,33 +17,27 @@ const today = new Date();
 //* CASE 6. Order 'Delivered' dan Order 'Postponed', active true ke active false, not pull id, monthly
 
 //! Execute Daily
-//* CASE 1. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', Bagasi 'Opened' to 'Closed' pull id from User, daily
-const setBagasiStatus = async () => {
+//* CASE 1a. h-1 waktuBerangkat, Bagasi'Scheduled' to 'Canceled', pull id from User, daily
+const setBagasiScheduledToCanceled = async () => {
   try {
-    //todo 1. Find Bagasi 'Scheduled' dan Bagasi 'Opened'
-    const statusScheduledAndOpened = await Bagasi.find({
-      $or: [{ status: "Scheduled" }, { status: "Opened" }],
-    });
+    //todo 1. Find Bagasi 'Scheduled'.
+    // const statusScheduledAndOpened = await Bagasi.find({
+    //   $or: [{ status: "Scheduled" }, { status: "Opened" }],
+    // });
+    const statusScheduled = await Bagasi.find({ status: "Scheduled" });
 
-    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 25hours)
-    const bagasiDeadline = statusScheduledAndOpened.filter(
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 25hours) h-1 dari waktuBerangkat
+    const bagasiDeadline = statusScheduled.filter(
       (bagasi) => today.getTime() >= bagasi.waktuBerangkat.getTime() - 90000000
     );
 
-    //todo 3. Yg lolos dari todo 2, ganti status 'Scheduled' to 'Canceled' dan 'Opened' to 'Closed'.
+    //todo 3. Yg lolos dari todo 2, ganti status 'Scheduled' to 'Canceled'.
     const setBagasiStatus = await Promise.all(
       bagasiDeadline.map(
         async (bagasi) =>
           await Bagasi.findByIdAndUpdate(
             bagasi._id,
-            {
-              status:
-                bagasi.status == "Scheduled"
-                  ? "Canceled"
-                  : bagasi.status == "Opened"
-                  ? "Closed"
-                  : "",
-            },
+            { status: "Canceled" },
             { new: true }
           )
       )
@@ -67,7 +62,44 @@ const setBagasiStatus = async () => {
     if (!removeBagasiID) return;
 
     console.log(
-      `successfully executing nodeSchedule: setBagasiStatus, at: ${new Date()}`
+      `successfully executing nodeSchedule: setBagasiScheduledToCanceled, at: ${new Date()}`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+//! Execute Daily
+//* CASE 1b. h-1 waktuBerangkat, Bagasi 'Opened' to 'Closed' , daily
+const setBagasiOpenedToClosed = async () => {
+  try {
+    //todo 1. Find Bagasi 'Opened'
+    // const statusScheduledAndOpened = await Bagasi.find({
+    //   $or: [{ status: "Scheduled" }, { status: "Opened" }],
+    // });
+    const statusOpened = await Bagasi.find({ status: "Opened" });
+
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 25hours) h-1 dari waktuBerangkat
+    const bagasiDeadline = statusOpened.filter(
+      (bagasi) => today.getTime() >= bagasi.waktuBerangkat.getTime() - 90000000
+    );
+
+    //todo 3. Yg lolos dari todo 2, ganti status 'Opened' to 'Closed'.
+    const setBagasiStatus = await Promise.all(
+      bagasiDeadline.map(
+        async (bagasi) =>
+          await Bagasi.findByIdAndUpdate(
+            bagasi._id,
+            { status: "Closed" },
+            { new: true }
+          )
+      )
+    );
+
+    if (!setBagasiStatus) return;
+
+    console.log(
+      `successfully executing nodeSchedule: setBagasiOpenedToClosed, at: ${new Date()}`
     );
   } catch (err) {
     console.log(err);
@@ -135,7 +167,7 @@ const setBagasiClosedToUnloaded = async () => {
 };
 
 //! Execute Daily
-//* CASE 3a. Bagasi.Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3a. Bagasi jika Full, Order 'Preparing' to 'Postponed', pull id from User, daily
 const setFullOrderPreparingToPostponed = async () => {
   try {
     //todo 1. Find Order 'Preparing'
@@ -203,7 +235,7 @@ const setLateOrderPreparingToPostponed = async () => {
     const ordersPreparing = await Order.find({ status: "Preparing" });
     if (!ordersPreparing) return;
 
-    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours)
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter, dgn comparation antara today vs waktuBerangkat Bagasi (25hours) h-1 waktuBerangkat
     let filterOrders = ordersPreparing.filter(
       (order) => today.getTime() >= order.waktuBerangkat.getTime() - 90000000
     );
@@ -263,7 +295,7 @@ const setOrderReadyToDelivered = async () => {
     //   }))
     // );
 
-    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuTiba Bagasi (h+3)
+    //todo 3. Loop hasil dari todo 2, dlm loop tsb di filter, dgn comparation antara today vs waktuTiba Bagasi (h+3 waktuTiba)
     const filterOrders = ordersReady.filter(
       (order) => today.getTime() >= order.waktuTiba.getTime() + 259200000
     );
@@ -388,7 +420,8 @@ const jobTesting = () => {
 //! Triggered DAILY “At 00:00.”
 const jobDaily = () => {
   schedule.scheduleJob("0 0 * * *", function () {
-    setBagasiStatus();
+    setBagasiScheduledToCanceled();
+    setBagasiOpenedToClosed();
     setBagasiClosedToUnloaded();
     setFullOrderPreparingToPostponed();
     setLateOrderPreparingToPostponed();

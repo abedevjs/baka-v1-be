@@ -240,9 +240,9 @@ USUL ADDOL
 
 NODESCHEDULE
     FlowBagasi ["Scheduled", "Opened", "Closed", "Unloaded", "Canceled"]
-        'Scheduled' (h-1 tgl brkt --nodeschedule daily case 1) 'Canceled' ( --nodeschedule monthly case 5) 'false'
+        'Scheduled' (h-1 tgl brkt --nodeschedule daily case 1a) 'Canceled' ( --nodeschedule monthly case 5) 'false'
             ✅ done
-        'Scheduled' (uploadTiket --user) 'Opened' (bagasiFull --user dan atau h-1 waktuBerangkat --nodeschedule daily case 1) 'Closed' (orderDeliveredAPI --user dan --nodeschedule daily case 2) 'Unloaded' (--nodeschedule monthly case 5) 'false'.
+        'Scheduled' (uploadTiket --user) 'Opened' (bagasiFull --user dan atau h-1 waktuBerangkat --nodeschedule daily case 1b) 'Closed' (orderDeliveredAPI --user dan --nodeschedule daily case 2) 'Unloaded' (--nodeschedule monthly case 5) 'false'.
             ✅ done
     FlowOrder ["Preparing", "Ready", "Delivered", "Postponed"]
         'Preparing' (Bagasi full --nodeschedule daily case 3a, h-1 tgl brkt --nodeschedule daily case 3b) 'Postponed' ( --nodeschedule monthly case 6) 'false'
