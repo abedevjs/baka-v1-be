@@ -8,7 +8,7 @@ const multerStorage = multer.diskStorage({
     //takes 3 argument current request, currently uploaded file, callback function
     //this callback function is like next in express
 
-    callback(null, "public/dokumen");
+    callback(null, "upload/dokumen");
     //first argument is error if error, and if valid is null
     //second argument is the location where u want the file to be stored
   },
