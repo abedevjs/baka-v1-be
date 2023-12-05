@@ -1,7 +1,7 @@
 exports.getHome = (req, res, next) => {
   const isAuthenticated = req.isAuthenticated();
 
-  const data = "abe is awesome";
+  const data = "abe is awesomeness";
 
   res.status(200).json({
     status: "done",
