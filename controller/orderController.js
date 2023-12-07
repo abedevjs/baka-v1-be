@@ -260,7 +260,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
   });
 });
 
-//* Desc: Di eksekusi oleh user dan nodeschedule (jika user lupa dan jika memungkinkan). Akan set orderStatus dari 'Ready' ke 'Delivered'
+//* Desc: Di eksekusi oleh user di frontEnd (page updateOrder tombol 'Selesai') dan nodeschedule (jika user lupa dan jika memungkinkan). Akan set orderStatus dari 'Ready' ke 'Delivered'
 exports.deliveredOrder = catchAsync(async (req, res, next) => {
   //todo 1. take id and check the order if exists
   const order = await Order.findById(req.params.id);
@@ -320,8 +320,8 @@ exports.deliveredOrder = catchAsync(async (req, res, next) => {
     )
   ); // ['Ready', 'Ready', 'Delivered']
 
+  //todo 7. if all the order.status are 'Delivered', change Bagasi.status to 'Unloaded'
   if (orderStatuses.every((el) => el == "Delivered")) {
-    //todo 7. if all the order.status are 'Delivered', change Bagasi.status to 'Unloaded'
     const newStatusBagasi = await Bagasi.findByIdAndUpdate(
       bagasi,
       {
@@ -341,12 +341,15 @@ exports.deliveredOrder = catchAsync(async (req, res, next) => {
         )
       );
 
-    //todo 8. if all the order.status are 'Delivered', remove the bagasiID from Owner.bagasi
+    //todo 8. if all the order.status are 'Delivered', remove the bagasiID from Owner.bagasi and remove the orderBagasiID from Owner.orderBagasiId
     const removeBagasiID = await UserAuth.findByIdAndUpdate(
       bagasi.owner._id,
       {
         $pull: {
           bagasi: {
+            $in: [order.bagasi._id],
+          },
+          orderBagasiId: {
             $in: [order.bagasi._id],
           },
         },

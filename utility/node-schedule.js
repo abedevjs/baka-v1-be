@@ -167,7 +167,7 @@ const setBagasiClosedToUnloaded = async () => {
 };
 
 //! Execute Daily
-//* CASE 3a. Bagasi jika Full, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3a. Bagasi jika Full, Order 'Preparing' to 'Postponed', pull id Order from arr User.order, pull id orderBagasi from arr User.orderBagasiId,  daily
 const setFullOrderPreparingToPostponed = async () => {
   try {
     //todo 1. Find Order 'Preparing'
@@ -204,14 +204,17 @@ const setFullOrderPreparingToPostponed = async () => {
     );
     if (!setPreparingToPostponed) return;
 
-    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order
+    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr arr UserAuth.order, orderBagasiId nya di pull from arr User.orderBagasiId
     const removeOrderID = await Promise.all(
       setPreparingToPostponed.map(
         async (order) =>
           await UserAuth.findByIdAndUpdate(
             order.owner._id,
             {
-              $pull: { order: { $in: [order._id] } },
+              $pull: {
+                order: { $in: [order._id] },
+                orderBagasiId: { $in: [order.bagasi._id] },
+              },
             },
             { new: true }
           )
@@ -228,7 +231,7 @@ const setFullOrderPreparingToPostponed = async () => {
 };
 
 //! Execute Daily
-//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id from User, daily
+//* CASE 3b. h-1 waktuBerangkat Bagasi, Order 'Preparing' to 'Postponed', pull id Order from User, pull id orderBagasi from arr User.orderBagasiId,  daily
 const setLateOrderPreparingToPostponed = async () => {
   try {
     //todo 1. Find Order 'Preparing'
@@ -256,14 +259,17 @@ const setLateOrderPreparingToPostponed = async () => {
     );
     if (!setPreparingToPostponed) return;
 
-    //todo 4. Yg lolos dari todo 3, orderId nya di pull dr UserAuth.order
+    //todo 4. Yg lolos dari todo 3, orderId nya di pull dr arr UserAuth.order, id orderBagasiId nya di pull from arr User.orderBagasiId,  daily
     const removeOrderID = await Promise.all(
       setPreparingToPostponed.map(
         async (order) =>
           await UserAuth.findByIdAndUpdate(
             order.owner._id,
             {
-              $pull: { order: { $in: [order._id] } },
+              $pull: {
+                order: { $in: [order._id] },
+                orderBagasiId: { $in: [order.bagasi._id] },
+              },
             },
             { new: true }
           )
@@ -280,7 +286,7 @@ const setLateOrderPreparingToPostponed = async () => {
 };
 
 //! Execute Daily
-//* CASE 4. h+3 waktuTiba Bagasi, Order 'Ready' to 'Delivered', pull id from User, daily
+//* CASE 4. h+3 waktuTiba Bagasi, Order 'Ready' to 'Delivered', pull id Order from arr User.order, pull id orderBagasi from arr User.orderBagasiId,  daily
 const setOrderReadyToDelivered = async () => {
   try {
     //todo 1. Find Order 'Ready'
@@ -316,14 +322,17 @@ const setOrderReadyToDelivered = async () => {
 
     if (!setReadyToDelivered) return;
 
-    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order
+    //todo 5. Yg lolos dari todo 4, orderId nya di pull dr UserAuth.order, id orderBagasi nya di pull from arr User.orderBagasiId,  daily
     const removeOrderID = await Promise.all(
       setReadyToDelivered.map(
         async (order) =>
           await UserAuth.findByIdAndUpdate(
             order.owner._id,
             {
-              $pull: { order: { $in: [order._id] } },
+              $pull: {
+                order: { $in: [order._id] },
+                orderBagasiId: { $in: [order.bagasi._id] },
+              },
             },
             { new: true }
           )

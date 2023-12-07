@@ -249,3 +249,6 @@ NODESCHEDULE
             ✅ done
         'Preparing' (uploadPayment --user) 'Ready' (orderDeliveredAPI --user dan h+3 waktuTiba Bagasi --nodeschedule daily case 4) 'Delivered' ( --nodeschedule monthly case 6) 'false'.
             ✅ done
+
+🔴 Pull id or array orderBagasiId from UserAuth.orderBagasiId di nodeschedule 3a, 3b, 4, dan orderController.deliveredOrder 
+    ✅ done
