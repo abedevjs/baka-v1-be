@@ -79,9 +79,9 @@ const setBagasiOpenedToClosed = async () => {
     // });
     const statusOpened = await Bagasi.find({ status: "Opened" });
 
-    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 25hours) h-1 dari waktuBerangkat
+    //todo 2. Loop hasil dari todo 1, dlm loop tsb di filter dgn comparation antara today == (wktBerangkat - 23hours) h-1 dari waktuBerangkat
     const bagasiDeadline = statusOpened.filter(
-      (bagasi) => today.getTime() >= bagasi.waktuBerangkat.getTime() - 90000000
+      (bagasi) => today.getTime() >= bagasi.waktuBerangkat.getTime() - 82800000
     );
 
     //todo 3. Yg lolos dari todo 2, ganti status 'Opened' to 'Closed'.
